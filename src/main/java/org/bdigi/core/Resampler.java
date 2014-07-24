@@ -187,11 +187,11 @@ public class Resampler {
 	private final static double i8 = 0.0;
 	private final static double i9 = 0.0;
 
-	interface Observer {
+	public interface Observer {
 		public void process(double v);
 	}
 
-	static abstract class Instance {
+	public static abstract class Instance {
 		int decimation;
 		double buf[];
 		int idx;

@@ -8,12 +8,9 @@ import org.bdigi.core.Complex;
  */
 public class FIR {
 	
-    public interface Filter {
-	    public double update(double v);
-    }
 
 	
-    static class Filter13 implements FIR.Filter {
+    static class Filter13 implements Filter {
 		double c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12;
 		double r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12;
 		double i0,i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12;
@@ -50,28 +47,6 @@ public class FIR {
 	}
 
 
-
-	interface Generator {
-		double get(int index);
-	}
-
-	public static double[] genCoeffs(int size, Window window, Generator f) {
-
-		if (window == null) window = Window.rectangle;
-		double W[] = window.get(size);
-		int center = (int)(size * 0.5);
-		double sum = 0.0;
-		double arr[] = new double[size];
-		for (int i=0 ; i<size ; i++) {
-		    double v = f.get(i-center) * W[i];
-		    sum += v;
-		    arr[i] = v;
-		}
-		for (int i=0 ; i<size ; i++) {
-		    arr[i] /= sum;
-		}
-		return arr;
-	}
 
 	static class FIRFilter implements Filter {
 
@@ -120,8 +95,30 @@ public class FIR {
 
 	}
 
+    interface Generator {
+        double get(int index);
+    }
 
-	public static Filter average(int size, Window window) {
+    public static double[] genCoeffs(int size, Window window, Generator f) {
+
+        if (window == null) window = Window.rectangle;
+        double W[] = window.get(size);
+        int center = (int)(size * 0.5);
+        double sum = 0.0;
+        double arr[] = new double[size];
+        for (int i=0 ; i<size ; i++) {
+            double v = f.get(i-center) * W[i];
+            sum += v;
+            arr[i] = v;
+        }
+        for (int i=0 ; i<size ; i++) {
+            arr[i] /= sum;
+        }
+        return arr;
+    }
+
+
+    public static Filter average(int size, Window window) {
 		final double omega = 1.0 / size;
 		double coeffs[] = genCoeffs(size, window, new Generator() { public double get(int i) {  return omega; }});
 		return (size==13) ? new Filter13(coeffs) : new FIRFilter(size, coeffs);
