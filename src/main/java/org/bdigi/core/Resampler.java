@@ -25,7 +25,7 @@
 package org.bdigi.core;
 
 /**
- * Created by vjamiro on 7/24/14.
+ * This is an unrolled polyphase resampler, designed for speed.  Enjoy!
  */
 public class Resampler {
 
@@ -40,8 +40,8 @@ public class Resampler {
 	private final static double c0204 = 0.109973;
 	private final static double c0205 = 0.00000;
 	private final static double d21 = c0201 + c0203;
-	private final static double d22 =         c0202 + c0204;
-	
+	private final static double d22 = c0202 + c0204;
+
 	//#########################################################
 	//###  DECIMATION : 3
 	//#########################################################
@@ -56,8 +56,8 @@ public class Resampler {
 	private final static double c0308 = -0.00000;
 	private final static double d31 = c0301 + c0303;
 	private final static double d32 = c0302 + c0304 + c0306;
-	private final static double d33 =         c0305 + c0307;
-	
+	private final static double d33 = c0305 + c0307;
+
 	//#########################################################
 	//###  DECIMATION : 4
 	//#########################################################
@@ -76,8 +76,8 @@ public class Resampler {
 	private final static double d41 = c0401 + c0404;
 	private final static double d42 = c0402 + c0405 + c0408;
 	private final static double d43 = c0403 + c0406 + c0409;
-	private final static double d44 =         c0407 + c0410;
-	
+	private final static double d44 = c0407 + c0410;
+
 	//#########################################################
 	//###  DECIMATION : 5
 	//#########################################################
@@ -100,8 +100,8 @@ public class Resampler {
 	private final static double d52 = c0502 + c0506 + c0510;
 	private final static double d53 = c0503 + c0507 + c0511;
 	private final static double d54 = c0504 + c0508 + c0512;
-	private final static double d55 =         c0509 + c0513;
-	
+	private final static double d55 = c0509 + c0513;
+
 	//#########################################################
 	//###  DECIMATION : 6
 	//#########################################################
@@ -128,8 +128,8 @@ public class Resampler {
 	private final static double d63 = c0603 + c0608 + c0613;
 	private final static double d64 = c0604 + c0609 + c0614;
 	private final static double d65 = c0605 + c0610 + c0615;
-	private final static double d66 =         c0611 + c0616;
-	
+	private final static double d66 = c0611 + c0616;
+
 	//#########################################################
 	//###  DECIMATION : 7
 	//#########################################################
@@ -161,10 +161,10 @@ public class Resampler {
 	private final static double d74 = c0704 + c0710 + c0716;
 	private final static double d75 = c0705 + c0711 + c0717;
 	private final static double d76 = c0706 + c0712 + c0718;
-	private final static double d77 =         c0713 + c0719;
-	
+	private final static double d77 = c0713 + c0719;
+
 	private final static double idx = 0;
-	
+
 	private final static double r0 = 0.0;
 	private final static double r1 = 0.0;
 	private final static double r2 = 0.0;
@@ -175,7 +175,7 @@ public class Resampler {
 	private final static double r7 = 0.0;
 	private final static double r8 = 0.0;
 	private final static double r9 = 0.0;
-	
+
 	private final static double i0 = 0.0;
 	private final static double i1 = 0.0;
 	private final static double i2 = 0.0;
@@ -187,21 +187,49 @@ public class Resampler {
 	private final static double i8 = 0.0;
 	private final static double i9 = 0.0;
 
-	class Resampler1 {
-		public void  decimate1(double v, f) { f(v); }
-		public void  interpolate1(v, buf) { buf[0]=v; }
-
+	interface Observer {
+		public void process(double v);
 	}
-	
 
-	double buf = new double
+	static abstract class Instance {
+		int decimation;
+		double buf[];
+		int idx;
+
+		public abstract void decimate(double v, Observer f);
+
+		public abstract void interpolate(double v, double buf[]);
+
+		public Instance(int decimation) {
+			this.decimation = decimation;
+			this.buf = new double[decimation];
+			idx = 0;
+		}
+	}
+
+	static class Resampler1 extends Instance {
+		public Resampler1() {
+			super(1);
+		}
+
+		public void decimate(double v, Observer f) {
+			f.process(v);
+		}
+
+		public void interpolate(double v, double buf[]) {
+			buf[0] = v;
+		}
+	}
 
 
-		//#############################################
-		//# 2
-		//#############################################
+	static class Resampler2 extends Instance {
+		public Resampler2() {
+			super(2);
+		}
 
-		function decimate2(v,f) {
+		double r0, r1, r2, r3;
+
+		public void decimate(double v, Observer f) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -209,23 +237,28 @@ public class Resampler {
 				r1 = r3;
 				r2 = buf[0];
 				r3 = buf[1];
-				var sum = r1*d21 + r2*d22;
-				f(sum);
+				f.process(r1 * d21 + r2 * d22);
 			}
 		}
 
-		function interpolate2(v, buf) {
-			r0 = r1; r1 = r2; r2 = v;
+		public void interpolate(double v, double buf[]) {
+			r0 = r1;
+			r1 = r2;
+			r2 = v;
 			buf[0] = /*r0 * c0200 + */r1 * c0202 + r2 * c0204;
 			buf[1] = r0 * c0201 + r1 * c0203/* + r2 * c0205*/;
 		}
+	}
+
+	static class Resampler3 extends Instance {
+		public Resampler3() {
+			super(3);
+		}
+
+		double r0, r1, r2, r3, r4;
 
 
-		//#############################################
-		//# 3
-		//#############################################
-
-		function decimate3(v, f) {
+		public void decimate(double v, Observer f) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -234,24 +267,30 @@ public class Resampler {
 				r2 = buf[0];
 				r3 = buf[1];
 				r4 = buf[2];
-				var sum = r1*d31 + r2*d32 + r3*d33;
-				f(sum);
+				f.process(r1 * d31 + r2 * d32 + r3 * d33);
 			}
 		}
 
-		function interpolate3(v, buf) {
-			r0 = r1; r1 = r2; r2 = v;
-			buf[0] = r0*c0300 + r1*c0303 + r2*c0306;
-			buf[1] = r0*c0301 + r1*c0304 + r2*c0307;
-			buf[2] = r0*c0302 + r1*c0305 + r2*c0308;
+		public void interpolate(double v, double buf[]) {
+			r0 = r1;
+			r1 = r2;
+			r2 = v;
+			buf[0] = r0 * c0300 + r1 * c0303 + r2 * c0306;
+			buf[1] = r0 * c0301 + r1 * c0304 + r2 * c0307;
+			buf[2] = r0 * c0302 + r1 * c0305 + r2 * c0308;
 		}
 
+	}
 
-		//#############################################
-		//# 4
-		//#############################################
+	static class Resampler4 extends Instance {
+		public Resampler4() {
+			super(4);
+		}
 
-		function decimate4(v, f) {
+		double r0, r1, r2, r3, r4, r5;
+
+
+		public void decimate(double v, Observer f) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -261,25 +300,31 @@ public class Resampler {
 				r3 = buf[1];
 				r4 = buf[2];
 				r5 = buf[3];
-				var sum = r1*d41 + r2*d42 + r3*d43 + r4*d44;
-				f(sum);
+				f.process(r1 * d41 + r2 * d42 + r3 * d43 + r4 * d44);
 			}
 		}
 
-		function interpolate4(v, buf) {
-			r0 = r1; r1 = r2; r2 = v;
-			buf[0] = r0*c0400 + r1*c0404 + r2*c0408;
-			buf[1] = r0*c0401 + r1*c0405 + r2*c0409;
-			buf[2] = r0*c0402 + r1*c0406 + r2*c0410;
-			buf[3] = r0*c0403 + r1*c0407 + r2*c0411;
+		public void interpolate(double v, double buf[]) {
+			r0 = r1;
+			r1 = r2;
+			r2 = v;
+			buf[0] = r0 * c0400 + r1 * c0404 + r2 * c0408;
+			buf[1] = r0 * c0401 + r1 * c0405 + r2 * c0409;
+			buf[2] = r0 * c0402 + r1 * c0406 + r2 * c0410;
+			buf[3] = r0 * c0403 + r1 * c0407 + r2 * c0411;
 		}
 
+	}
 
-		//#############################################
-		//# 5
-		//#############################################
+	static class Resampler5 extends Instance {
+		public Resampler5() {
+			super(5);
+		}
 
-		function decimate5(v, f) {
+		double r0, r1, r2, r3, r4, r5, r6;
+
+
+		public void decimate(double v, Observer f) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -290,28 +335,33 @@ public class Resampler {
 				r4 = buf[2];
 				r5 = buf[3];
 				r6 = buf[4];
-				var sum = r1*d51 + r2*d52 + r3*d53 + r4*d54 + r5*d55;
-				f(sum);
+				f.process(r1 * d51 + r2 * d52 + r3 * d53 + r4 * d54 + r5 * d55);
 			}
 		}
 
-		function interpolate5(v, buf) {
-			r0 = r1; r1 = r2; r2 = v;
-			buf[0] = r0*c0500 + r1*c0505 + r2*c0510;
-			buf[1] = r0*c0501 + r1*c0506 + r2*c0511;
-			buf[2] = r0*c0502 + r1*c0507 + r2*c0512;
-			buf[3] = r0*c0503 + r1*c0508 + r2*c0513;
-			buf[4] = r0*c0504 + r1*c0509 + r2*c0514;
+		public void interpolate(double v, double buf[]) {
+			r0 = r1;
+			r1 = r2;
+			r2 = v;
+			buf[0] = r0 * c0500 + r1 * c0505 + r2 * c0510;
+			buf[1] = r0 * c0501 + r1 * c0506 + r2 * c0511;
+			buf[2] = r0 * c0502 + r1 * c0507 + r2 * c0512;
+			buf[3] = r0 * c0503 + r1 * c0508 + r2 * c0513;
+			buf[4] = r0 * c0504 + r1 * c0509 + r2 * c0514;
+		}
+	}
+
+	static class Resampler6 extends Instance {
+		public Resampler6() {
+			super(6);
 		}
 
+		double r0, r1, r2, r3, r4, r5, r6, r7;
 
-		//#############################################
-		//# 6
-		//#############################################
 
-		function decimate6(v, f) {
+		public void decimate(double v, Observer f) {
 			buf[idx++] = v;
-			if (idx >= decimation){
+			if (idx >= decimation) {
 				idx = 0;
 				r0 = r6;
 				r1 = r7;
@@ -321,28 +371,32 @@ public class Resampler {
 				r5 = buf[3];
 				r6 = buf[4];
 				r7 = buf[5];
-				var sum = r1*d61 + r2*d62 + r3*d63 + r4*d64 + r5*d65 + r6*d66;
-				f(sum);
+				f.process(r1 * d61 + r2 * d62 + r3 * d63 + r4 * d64 + r5 * d65 + r6 * d66);
 			}
 		}
 
-		function interpolate6(v, buf) {
-			r0 = r1; r1 = r2; r2 = v;
-			buf[0] = r0*c0600 + r1*c0606 + r2*c0612;
-			buf[1] = r0*c0601 + r1*c0607 + r2*c0613;
-			buf[2] = r0*c0602 + r1*c0608 + r2*c0614;
-			buf[3] = r0*c0603 + r1*c0609 + r2*c0615;
-			buf[4] = r0*c0604 + r1*c0610 + r2*c0616;
-			buf[5] = r0*c0605 + r1*c0611 + r2*c0617;
+		public void interpolate(double v, double buf[]) {
+			r0 = r1;
+			r1 = r2;
+			r2 = v;
+			buf[0] = r0 * c0600 + r1 * c0606 + r2 * c0612;
+			buf[1] = r0 * c0601 + r1 * c0607 + r2 * c0613;
+			buf[2] = r0 * c0602 + r1 * c0608 + r2 * c0614;
+			buf[3] = r0 * c0603 + r1 * c0609 + r2 * c0615;
+			buf[4] = r0 * c0604 + r1 * c0610 + r2 * c0616;
+			buf[5] = r0 * c0605 + r1 * c0611 + r2 * c0617;
+		}
+	}
+
+	static class Resampler7 extends Instance {
+		public Resampler7() {
+			super(7);
 		}
 
-
-		//#############################################
-		//# 7
-		//#############################################
+		double r0, r1, r2, r3, r4, r5, r6, r7, r8;
 
 
-		function decimate7(v, f) {
+		public void decimate(double v, Observer f) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -355,82 +409,47 @@ public class Resampler {
 				r6 = buf[4];
 				r7 = buf[5];
 				r8 = buf[6];
-				var sum = r1*d71 + r2*d72 + r3*d73 + r4*d74 * r5*d75 + r6*d76 + r7*d77;
-				f(sum);
+				f.process(r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77);
 			}
 		}
 
-		function interpolate7(v, buf) {
-			r0 = r1; r1 = r2; r2 = v;
-			buf[0] = r0*c0700 + r1*c0707 + r2*c0714;
-			buf[1] = r0*c0701 + r1*c0708 + r2*c0715;
-			buf[2] = r0*c0702 + r1*c0709 + r2*c0716;
-			buf[3] = r0*c0703 + r1*c0710 + r2*c0717;
-			buf[4] = r0*c0704 + r1*c0711 + r2*c0718;
-			buf[5] = r0*c0705 + r1*c0712 + r2*c0719;
-			buf[6] = r0*c0706 + r1*c0713 + r2*c0720;
+		public void interpolate(double v, double buf[]) {
+			r0 = r1;
+			r1 = r2;
+			r2 = v;
+			buf[0] = r0 * c0700 + r1 * c0707 + r2 * c0714;
+			buf[1] = r0 * c0701 + r1 * c0708 + r2 * c0715;
+			buf[2] = r0 * c0702 + r1 * c0709 + r2 * c0716;
+			buf[3] = r0 * c0703 + r1 * c0710 + r2 * c0717;
+			buf[4] = r0 * c0704 + r1 * c0711 + r2 * c0718;
+			buf[5] = r0 * c0705 + r1 * c0712 + r2 * c0719;
+			buf[6] = r0 * c0706 + r1 * c0713 + r2 * c0720;
 		}
-
-		//#############################################
-		//# M A I N
-		//#############################################
-
-		function BadDecimationSpecException(message) {
-				this.message = message;
-		this.name = "BadDecimationSpecException";
-		}
+	}
 
 
+	public static Instance create(int decimation) {
 
 		switch (decimation) {
-			case 1 : this.decimate  = decimate1;  this.interpolate  = interpolate1; break;
-			case 2 : this.decimate  = decimate2;  this.interpolate  = interpolate2; break;
-			case 3 : this.decimate  = decimate3;  this.interpolate  = interpolate3; break;
-			case 4 : this.decimate  = decimate4;  this.interpolate  = interpolate4; break;
-			case 5 : this.decimate  = decimate5;  this.interpolate  = interpolate5; break;
-			case 6 : this.decimate  = decimate6;  this.interpolate  = interpolate6; break;
-			case 7 : this.decimate  = decimate7;  this.interpolate  = interpolate7; break;
-			case 8 : var sub8 = new Resampler(4);
-				this.decimate = function(v, f) {
-				decimate2(v, function(v1) {
-					sub8.decimate(v1, f);
-				});
-			};
-			this.interpolate = function(v, f) {
-				interpolate2(v, function(v1) {
-					sub8.interpolate(v1, f);
-				});
-			};
-			break;
-			case 9 : var sub9 = new Resampler(3);
-				this.decimate = function(v, f) {
-				decimate3(v, function(v1) {
-					sub9.decimate(v1, f);
-				});
-			};
-			this.interpolate = function(v, f) {
-				interpolate3(v, function(v1) {
-					sub9.interpolate(v1, f);
-				});
-			};
-			break;
-			case 10 : var sub10 = new Resampler(5);
-				this.decimate = function(v, f) {
-				decimate2(v, function(v1) {
-					sub10.decimate(v1, f);
-				});
-			};
-			this.interpolate = function(v, f) {
-				interpolate2(v, function(v1) {
-					sub10.interpolate(v1, f);
-				});
-			};
-			break;
-			default:  throw new BadDecimationSpecException("Decimation " + decimation + " not supported");
+			case 1:
+				return new Resampler1();
+			case 2:
+				return new Resampler2();
+			case 3:
+				return new Resampler3();
+			case 4:
+				return new Resampler4();
+			case 5:
+				return new Resampler5();
+			case 6:
+				return new Resampler6();
+			case 7:
+				return new Resampler7();
+			default:
+				throw new IllegalArgumentException("Decimation " + decimation + " not supported");
 		}
 
-
-
+	}
 
 
 }
