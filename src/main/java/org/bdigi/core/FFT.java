@@ -1,12 +1,12 @@
 /**
- * BDigi DSP tool
+ * bdigi DSP tool
  *
  * Authors:
  *   Bob Jamison
  *
  * Copyright (c) 2014 Bob Jamison
  * 
- *  This file is part of the BDigi library.
+ *  This file is part of the bdigi library.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -23,11 +23,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bdigi
+package org.bdigi.core;
 
+
+import java.util.ArrayList;
 
 /**
- * Finally got split radix to work!
+ * A fairly efficient split-radix FFT
  */
 class FFT {
 
@@ -45,19 +47,8 @@ class FFT {
         power = (int)(Math.log(N) / Math.log(2));
         xr = new double[N];
         xi = new double[N];
-        bitReversedIndices = new int[N];
-        for (int i=0 ; i<N ; i++) {
-            int np = N;
-            int index = i;
-            int bitreversed = 0;
-            while (np > 1) {
-               bitreversed <<= 1;
-               bitreversed += index & 1;
-               index >>= 1
-               np >>= 1
-            }
-            bitReversedIndices[i] = bitreversed;
-        }
+	    generateIndices();
+ 	    generateStages();
     }
 
     class Step {
@@ -69,6 +60,22 @@ class FFT {
             this.wi3 = wi3;
         }
     }
+
+	private void generateIndices() {
+		bitReversedIndices = new int[N];
+		for (int i=0 ; i<N ; i++) {
+			int np = N;
+			int index = i;
+			int bitreversed = 0;
+			while (np > 1) {
+				bitreversed <<= 1;
+				bitreversed += index & 1;
+				index >>= 1;
+				np >>= 1;
+			}
+			bitReversedIndices[i] = bitreversed;
+		}
+	}
     
     //let's pre-generate anything we can
     private void generateStages() {
@@ -77,16 +84,16 @@ class FFT {
         int n4 = n2>>2; // == n/4, n/8, ..., 1
         for (int k=1 ; k<power ; k++) {
             ArrayList<Step> stage = new ArrayList<>();
-            double e = 2.0 * Math.Pi / n2;
-            for (int j=i ; j<n4 ; j++) {
-                double a = j * e
-                stage += new Step(Math.cos(a), Math.sin(a), Math.cos(3.0*a), Math.sin(3.0*a))
+            double e = 2.0 * Math.PI / n2;
+            for (int j=k ; j<n4 ; j++) {
+                double a = j * e;
+                stage.add(new Step(Math.cos(a), Math.sin(a), Math.cos(3.0*a), Math.sin(3.0*a)));
                 }
-            xs.add(stage.toArray());
+            xs.add(stage.toArray(new Step[0]));
             n2>>=1;
             n4>>=1;
             }
-        stages = xs.toArray();
+        stages = xs.toArray(new Step[0][0]);
     }
 
  
@@ -96,16 +103,14 @@ class FFT {
     
     public void apply(double[] input) {
         for (int i=0 ; i<N ; i++) {
-            xr[idx] = input[idx]; // * W[idx];
-            xi[idx] = 0;
+            xr[i] = input[i]; // * W[idx];
+            xi[i] = 0;
         }
    }
     
-    private void calculate() [
-        int ix=0, id=0, i0=0, i1=0, i2=0, i3=0;
-        double tr=0.0, ti=0.0, tr0=0.0, ti0=0.0, tr1=0.0, ti1=0.0;
- 
-        int stageidx = 0
+    private void calculate() {
+
+        int stageidx = 0;
 
         int n2 = N;        // == n>>(k-1) == n, n/2, n/4, ..., 4
         int n4 = n2>>2;    // == n/4, n/8, ..., 1
@@ -114,119 +119,118 @@ class FFT {
           Step stage[] = stages[stageidx++];
 
 
-          int id = (n2 << 1)
-          ix = 0
+          int id = (n2 << 1);
+          int ix = 0;
           while (ix < N) {
             //ix=j=0
-            for (i0 <- ix until N by id) {
-              i1 = i0 + n4
-              i2 = i1 + n4
-              i3 = i2 + n4
+            for (int i0=0 ; i0<N ; i0 += id)  {
+              int i1 = i0 + n4;
+              int i2 = i1 + n4;
+              int i3 = i2 + n4;
 
               //sumdiff3[x[i0], x[i2], t0]
-              tr0 = xr[i0] - xr[i2]
-              ti0 = xi[i0] - xi[i2]
-              xr[i0] += xr[i2]
-              xi[i0] += xi[i2]
+              double tr0 = xr[i0] - xr[i2];
+              double ti0 = xi[i0] - xi[i2];
+              xr[i0] += xr[i2];
+              xi[i0] += xi[i2];
               //sumdiff3[x[i1], x[i3], t1]
-              tr1 = xr[i1] - xr[i3]
-              ti1 = xi[i1] - xi[i3]
-              xr[i1] += xr[i3]
-              xi[i1] += xi[i3]
+              double tr1 = xr[i1] - xr[i3];
+              double ti1 = xi[i1] - xi[i3];
+              xr[i1] += xr[i3];
+              xi[i1] += xi[i3];
 
               // t1 *= Complex[0, 1];  // +isign
-              tr = tr1
-              tr1 = -ti1
-              ti1 = tr
+              double tr = tr1;
+              tr1 = -ti1;
+              ti1 = tr;
 
               //sumdiff[t0, t1]
-              tr = tr1 - tr0
-              ti = ti1 - ti0
-              tr0 += tr1
-              ti0 += ti1
-              tr1 = tr
-              ti1 = ti
+              tr = tr1 - tr0;
+              double ti = ti1 - ti0;
+              tr0 += tr1;
+              ti0 += ti1;
+              tr1 = tr;
+              ti1 = ti;
 
-              xr[i2] = tr0 // .mul[w1];
-              xi[i2] = ti0 // .mul[w1];
-              xr[i3] = tr1 // .mul[w3];
-              xi[i3] = ti1 // .mul[w3];
-              n2 >>= 1
-              n4 >>= 1
+              xr[i2] = tr0; // .mul[w1];
+              xi[i2] = ti0; // .mul[w1];
+              xr[i3] = tr1; // .mul[w3];
+              xi[i3] = ti1; // .mul[w3];
+              n2 >>= 1;
+              n4 >>= 1;
             }
-          ix = [id << 1] - n2
-          id <<= 2
+          ix = (id << 1) - n2;
+          id <<= 2;
           }
 
 
-        var dataindex = 0
+        int dataindex = 0;
 
-        for [j <- 1 until n4] {
+        for (int j=1 ; j<n4 ; j++) {
 
-            var data = stage[dataindex]
-            dataindex += 1
-            var wr1 = data.wr1
-            var wi1 = data.wi1
-            var wr3 = data.wr3
-            var wi3 = data.wi3
+            Step data = stage[dataindex++];
+            double wr1 = data.wr1;
+            double wi1 = data.wi1;
+            double wr3 = data.wr3;
+            double wi3 = data.wi3;
 
-            id = [n2<<1]
-            ix = j
-            while [ix<N] {
-                for [i0 <- ix until N by id] {
-                    i1 = i0 + n4
-                    i2 = i1 + n4
-                    i3 = i2 + n4
+            id = n2<<1;
+            ix = j;
+            while (ix<N) {
+	            for (int i0 = ix ; i0<N ; i0 += id) {
+                    int i1 = i0 + n4;
+                    int i2 = i1 + n4;
+                    int i3 = i2 + n4;
 
                     //sumdiff3[x[i0], x[i2], t0]
-                    tr0 = xr[i0] - xr[i2]
-                    ti0 = xi[i0] - xi[i2]
-                    xr[i0] += xr[i2]
-                    xi[i0] += xi[i2]
+                    double tr0 = xr[i0] - xr[i2];
+                    double ti0 = xi[i0] - xi[i2];
+                    xr[i0] += xr[i2];
+                    xi[i0] += xi[i2];
                     //sumdiff3[x[i1], x[i3], t1]
-                    tr1 = xr[i1] - xr[i3]
-                    ti1 = xi[i1] - xi[i3]
-                    xr[i1] += xr[i3]
-                    xi[i1] += xi[i3]
+                    double tr1 = xr[i1] - xr[i3];
+                    double ti1 = xi[i1] - xi[i3];
+                    xr[i1] += xr[i3];
+                    xi[i1] += xi[i3];
 
                     // t1 *= Complex[0, 1];  // +isign
-                    tr = tr1
-                    tr1 = -ti1
-                    ti1 = tr
+                    double tr = tr1;
+                    tr1 = -ti1;
+                    ti1 = tr;
 
                     //sumdiff[t0, t1]
-                    tr  = tr1 - tr0
-                    ti  = ti1 - ti0
-                    tr0 += tr1
-                    ti0 += ti1
-                    tr1 = tr
-                    ti1 = ti
+                    tr  = tr1 - tr0;
+                    double ti  = ti1 - ti0;
+                    tr0 += tr1;
+                    ti0 += ti1;
+                    tr1 = tr;
+                    ti1 = ti;
 
-                    xr[i2] = tr0*wr1 - ti0*wi1  // .mul[w1];
-                    xi[i2] = ti0*wr1 + tr0*wi1  // .mul[w1];
-                    xr[i3] = tr1*wr3 - ti1*wi3  // .mul[w3];
-                    xi[i3] = ti1*wr3 + tr1*wi3  // .mul[w3];
+                    xr[i2] = tr0*wr1 - ti0*wi1;  // .mul[w1];
+                    xi[i2] = ti0*wr1 + tr0*wi1;  // .mul[w1];
+                    xr[i3] = tr1*wr3 - ti1*wi3;  // .mul[w3];
+                    xi[i3] = ti1*wr3 + tr1*wi3;  // .mul[w3];
                     }
-                ix = [id<<1]-n2+j
-                id <<= 2
+                ix = (id<<1)-n2+j;
+                id <<= 2;
                 }
             }
         }
 
-        id=4
-        ix=0
-        while [ix < N] {
-            for [i0 <- ix until N by id] {
-                i1 = i0+1
-                tr = xr[i1] - xr[i0]
-                ti = xi[i1] - xi[i0]
-                xr[i0] += xr[i1]
-                xi[i0] += xi[i1]
-                xr[i1] = tr
-                xi[i1] = ti
+        int id=4;
+        int ix=0;
+        while (ix < N) {
+	        for (int i0=ix ; i0<N ; i0+=id) {
+                int i1 = i0+1;
+                double tr = xr[i1] - xr[i0];
+                double ti = xi[i1] - xi[i0];
+                xr[i0] += xr[i1];
+                xi[i0] += xi[i1];
+                xr[i1] = tr;
+                xi[i1] = ti;
             }
-            ix = id + id - 2 //2*[id-1];
-        id <<= 2
+            ix = id + id - 2; //2*[id-1];
+        id <<= 2;
         }
 
     }//apply
