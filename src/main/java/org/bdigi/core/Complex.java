@@ -54,6 +54,14 @@ public class Complex {
 		this.i = 0;
 	}
 
+	public double getR() {
+		return r;
+	}
+
+	public double getI() {
+		return i;
+	}
+
 	/**
 	 * Addition
 	 * @param other complex value to add to this one

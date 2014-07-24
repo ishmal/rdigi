@@ -79,11 +79,11 @@ class FFT {
     
     //let's pre-generate anything we can
     private void generateStages() {
-        ArrayList<Step[]> xs = new ArrayList<>();
+        ArrayList<Step[]> xs = new ArrayList<Step[]>();
         int n2 = N;  // == n>>(k-1) == n, n/2, n/4, ..., 4
         int n4 = n2>>2; // == n/4, n/8, ..., 1
         for (int k=1 ; k<power ; k++) {
-            ArrayList<Step> stage = new ArrayList<>();
+            ArrayList<Step> stage = new ArrayList<Step>();
             double e = 2.0 * Math.PI / n2;
             for (int j=k ; j<n4 ; j++) {
                 double a = j * e;
