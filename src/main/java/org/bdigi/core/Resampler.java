@@ -24,6 +24,8 @@
  */
 package org.bdigi.core;
 
+import java.util.Optional;
+
 /**
  * This is an unrolled polyphase resampler, designed for speed.  Enjoy!
  */
@@ -187,16 +189,17 @@ public class Resampler {
 	private final static double i8 = 0.0;
 	private final static double i9 = 0.0;
 
-	public interface Observer {
-		public void process(double v);
-	}
-
 	public static abstract class Instance {
 		int decimation;
 		double buf[];
 		int idx;
+        double value;
+        
+        public double getValue() {
+            return value;
+        }
 
-		public abstract void decimate(double v, Observer f);
+		public abstract boolean decimate(double v);
 
 		public abstract void interpolate(double v, double buf[]);
 
@@ -212,8 +215,9 @@ public class Resampler {
 			super(1);
 		}
 
-		public void decimate(double v, Observer f) {
-			f.process(v);
+		public boolean decimate(double v) {
+			value = v;
+            return true;
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -229,7 +233,7 @@ public class Resampler {
 
 		double r0, r1, r2, r3;
 
-		public void decimate(double v, Observer f) {
+		public boolean decimate(double v) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -237,8 +241,11 @@ public class Resampler {
 				r1 = r3;
 				r2 = buf[0];
 				r3 = buf[1];
-				f.process(r1 * d21 + r2 * d22);
-			}
+				value =r1 * d21 + r2 * d22;
+                return true;
+			} else {
+                return false;
+            }
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -258,7 +265,7 @@ public class Resampler {
 		double r0, r1, r2, r3, r4;
 
 
-		public void decimate(double v, Observer f) {
+		public boolean decimate(double v) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -267,8 +274,11 @@ public class Resampler {
 				r2 = buf[0];
 				r3 = buf[1];
 				r4 = buf[2];
-				f.process(r1 * d31 + r2 * d32 + r3 * d33);
-			}
+				value = r1 * d31 + r2 * d32 + r3 * d33;
+                return true;
+            } else {
+                return false;
+            }
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -290,7 +300,7 @@ public class Resampler {
 		double r0, r1, r2, r3, r4, r5;
 
 
-		public void decimate(double v, Observer f) {
+		public boolean decimate(double v) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -300,8 +310,11 @@ public class Resampler {
 				r3 = buf[1];
 				r4 = buf[2];
 				r5 = buf[3];
-				f.process(r1 * d41 + r2 * d42 + r3 * d43 + r4 * d44);
-			}
+				value = r1 * d41 + r2 * d42 + r3 * d43 + r4 * d44;
+                return true;
+            } else {
+                return false;
+            }
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -324,7 +337,7 @@ public class Resampler {
 		double r0, r1, r2, r3, r4, r5, r6;
 
 
-		public void decimate(double v, Observer f) {
+		public boolean decimate(double v) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -335,8 +348,11 @@ public class Resampler {
 				r4 = buf[2];
 				r5 = buf[3];
 				r6 = buf[4];
-				f.process(r1 * d51 + r2 * d52 + r3 * d53 + r4 * d54 + r5 * d55);
-			}
+				value = r1 * d51 + r2 * d52 + r3 * d53 + r4 * d54 + r5 * d55;
+                return true;
+            } else {
+                return false;
+            }
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -359,7 +375,7 @@ public class Resampler {
 		double r0, r1, r2, r3, r4, r5, r6, r7;
 
 
-		public void decimate(double v, Observer f) {
+		public boolean decimate(double v) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -371,8 +387,11 @@ public class Resampler {
 				r5 = buf[3];
 				r6 = buf[4];
 				r7 = buf[5];
-				f.process(r1 * d61 + r2 * d62 + r3 * d63 + r4 * d64 + r5 * d65 + r6 * d66);
-			}
+				value = r1 * d61 + r2 * d62 + r3 * d63 + r4 * d64 + r5 * d65 + r6 * d66;
+                return true;
+            } else {
+                return false;
+            }
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -396,7 +415,7 @@ public class Resampler {
 		double r0, r1, r2, r3, r4, r5, r6, r7, r8;
 
 
-		public void decimate(double v, Observer f) {
+		public boolean decimate(double v) {
 			buf[idx++] = v;
 			if (idx >= decimation) {
 				idx = 0;
@@ -409,8 +428,11 @@ public class Resampler {
 				r6 = buf[4];
 				r7 = buf[5];
 				r8 = buf[6];
-				f.process(r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77);
-			}
+				value = r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77;
+                return true;
+            } else {
+                return false;
+            }
 		}
 
 		public void interpolate(double v, double buf[]) {
@@ -450,6 +472,40 @@ public class Resampler {
 		}
 
 	}
+
+
+    public static class X {
+
+        Instance resr;
+        Instance resi;
+        double tempr;
+        Complex value;
+
+        public X(int decimation) {
+            resr = create(decimation);
+            resi = create(decimation);
+        }
+
+        public boolean decimate(Complex v) {
+            if (resr.decimate(v.getR())) {
+                tempr = resr.getValue();
+            }
+            if (resi.decimate(v.getI())) {
+                value = new Complex(tempr, resi.getValue());
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        public Complex getValue() {
+            return value;
+        }
+
+
+    }
+
 
 
 }

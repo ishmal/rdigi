@@ -1,9 +1,6 @@
 package org.bdigi.core.mode;
 
-import org.bdigi.core.Constants;
-import org.bdigi.core.Digi;
-import org.bdigi.core.Nco;
-import org.bdigi.core.Resampler;
+import org.bdigi.core.*;
 
 /**
  * Created by vjamiro on 7/24/14.
@@ -13,8 +10,8 @@ public class Mode {
     Digi par;
     int decimation;
     double sampleRate;
-    Resampler.Instance decimator;
-    Resampler.Instance interpolator;
+    Resampler.X decimator;
+    Resampler.X interpolator;
     Nco nco;
 
     public Mode(Digi par, Object props, double sampleRateHint) {
@@ -25,8 +22,8 @@ public class Mode {
         decimation = (int)(par.getSampleRate() / sampleRateHint);
         sampleRate = par.getSampleRate() / decimation;
 
-        decimator = Resampler.create(decimation);
-        interpolator = Resampler.create(decimation);
+        decimator = new Resampler.X(decimation);
+        interpolator = new Resampler.X(decimation);
 
         nco = new Nco(frequency, par.getSampleRate());
 
@@ -84,7 +81,14 @@ public class Mode {
     }
 
     public void receiveData(double v) {
+        Complex cx = nco.mixNext(v);
+        if (decimator.decimate(cx)) {
+            receive(decimator.getValue());
+        }
+    }
 
+    public void receive(Complex v) {
+        //overload this
     }
 
 
