@@ -24,8 +24,6 @@
  */
 package org.bdigi.core;
 
-import java.util.Optional;
-
 /**
  * This is an unrolled polyphase resampler, designed for speed.  Enjoy!
  */
@@ -189,7 +187,7 @@ public class Resampler {
 	private final static double i8 = 0.0;
 	private final static double i9 = 0.0;
 
-	public static abstract class Instance {
+	public static abstract class D {
 		int decimation;
 		double buf[];
 		int idx;
@@ -203,14 +201,14 @@ public class Resampler {
 
 		public abstract void interpolate(double v, double buf[]);
 
-		public Instance(int decimation) {
+		public D(int decimation) {
 			this.decimation = decimation;
 			this.buf = new double[decimation];
 			idx = 0;
 		}
 	}
 
-	static class Resampler1 extends Instance {
+	static class Resampler1 extends D {
 		public Resampler1() {
 			super(1);
 		}
@@ -226,7 +224,7 @@ public class Resampler {
 	}
 
 
-	static class Resampler2 extends Instance {
+	static class Resampler2 extends D {
 		public Resampler2() {
 			super(2);
 		}
@@ -257,7 +255,7 @@ public class Resampler {
 		}
 	}
 
-	static class Resampler3 extends Instance {
+	static class Resampler3 extends D {
 		public Resampler3() {
 			super(3);
 		}
@@ -292,7 +290,7 @@ public class Resampler {
 
 	}
 
-	static class Resampler4 extends Instance {
+	static class Resampler4 extends D {
 		public Resampler4() {
 			super(4);
 		}
@@ -329,7 +327,7 @@ public class Resampler {
 
 	}
 
-	static class Resampler5 extends Instance {
+	static class Resampler5 extends D {
 		public Resampler5() {
 			super(5);
 		}
@@ -367,7 +365,7 @@ public class Resampler {
 		}
 	}
 
-	static class Resampler6 extends Instance {
+	static class Resampler6 extends D {
 		public Resampler6() {
 			super(6);
 		}
@@ -407,7 +405,7 @@ public class Resampler {
 		}
 	}
 
-	static class Resampler7 extends Instance {
+	static class Resampler7 extends D {
 		public Resampler7() {
 			super(7);
 		}
@@ -450,7 +448,7 @@ public class Resampler {
 	}
 
 
-	public static Instance create(int decimation) {
+	public static D create(int decimation) {
 
 		switch (decimation) {
 			case 1:
@@ -476,8 +474,8 @@ public class Resampler {
 
     public static class X {
 
-        Instance resr;
-        Instance resi;
+        D resr;
+        D resi;
         double tempr;
         Complex value;
 
