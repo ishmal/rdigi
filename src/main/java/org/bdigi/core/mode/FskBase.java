@@ -11,7 +11,7 @@ import org.bdigi.core.filter.Window;
  */
 public class FskBase extends Mode {
 
-    public FskBase(Digi par, Props props, double sampleRateHint) {
+    public FskBase(Digi par, String props, double sampleRateHint) {
         super(par, props, sampleRateHint);
     }
 

@@ -8,14 +8,16 @@ import org.bdigi.core.*;
 public class Mode {
 
     Digi par;
+    String props;
     int decimation;
     double sampleRate;
     Resampler.X decimator;
     Resampler.X interpolator;
     Nco nco;
 
-    public Mode(Digi par, Object props, double sampleRateHint) {
+    public Mode(Digi par, String props, double sampleRateHint) {
         this.par = par;
+        this.props = props;
 
         adjustAfc();
 
@@ -27,6 +29,10 @@ public class Mode {
 
         nco = new Nco(frequency, par.getSampleRate());
 
+
+    }
+
+    public void setControl(String key, String value) {
 
     }
 
