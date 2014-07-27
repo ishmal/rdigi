@@ -61,6 +61,10 @@ public class Digi {
         }
     }
 
+    public void status(String s) {
+
+    }
+
     public void puttext(String s) {
 
     }

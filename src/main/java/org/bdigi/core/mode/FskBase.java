@@ -41,6 +41,10 @@ public class FskBase extends Mode {
         sf = FIR.bandpass(13,  0.25*getRate(),  0.75*getRate(), getSampleRate(), Window.rectangle);
     }
 
+    public boolean isMiddleBit(boolean bit) {
+        return false;
+    }
+
     public void receive(Complex v) {
 
     }
