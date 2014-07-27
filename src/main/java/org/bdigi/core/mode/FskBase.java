@@ -23,6 +23,19 @@ public class FskBase extends Mode {
         adjust();
     }
 
+    private double shift;
+
+    public double getShift() {
+        return shift;
+    }
+    public void setShift(double v) {
+        shift = v;
+    }
+
+    public double getBandwidth() {
+        return shift;
+    }
+
     private void adjust() {
         mf = FIR.bandpass(13, -0.75*getRate(), -0.25*getRate(), getSampleRate(), Window.rectangle);
         sf = FIR.bandpass(13,  0.25*getRate(),  0.75*getRate(), getSampleRate(), Window.rectangle);

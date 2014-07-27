@@ -63,6 +63,7 @@ public class Mode {
 
     public void setRate(double v) {
         rate = v;
+        samplesPerSymbol = sampleRate / rate;
     }
 
     public double getRate() {
@@ -71,6 +72,12 @@ public class Mode {
 
     public double getSampleRate() {
         return sampleRate;
+    }
+
+    private double samplesPerSymbol;
+
+    public double getSamplesPerSymbol() {
+        return samplesPerSymbol;
     }
 
     int loBin, freqBin, hiBin;
