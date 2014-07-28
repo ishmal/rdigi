@@ -1,6 +1,7 @@
 package org.bdigi.core.mode;
 
 import org.bdigi.core.Complex;
+import org.bdigi.core.Convolutional;
 import org.bdigi.core.Digi;
 import org.bdigi.core.filter.Biquad;
 import org.bdigi.core.filter.Filter;
@@ -14,6 +15,7 @@ public class Psk extends Mode {
     int symbollen, halfSym;
     boolean encodeTable[][];
     int decodeTable[];
+    Convolutional.Decoder decoder;
 
     public Psk(Digi par) {
         super(par, "", 1000.0);
@@ -306,12 +308,12 @@ set value(v) { self.setQpskMode(v); }
             d01 = distance(dv,  halfpi);
             d10 = distance(dv, -halfpi);
             d11 = distance(dv,     0.0);
-            int bm = [d00, d01, d10, d11];
+            /*int bm[] = new int[]{d00, d01, d10, d11};
             //println("%6.3f %6.3f %6.3f  :  %3d %3d %3d %3d".format(lastv, vn, dv, d00, d01, d10, d11))
             boolean bits[] = decoder.decodeOne(bm);
             int len = bits.length;
             for (int idx=0 ; idx < len ; idx++)
-                processBit(bits[idx]);
+                processBit(bits[idx]);*/
             lastv = vn; /**/
         } else { //bpsk
                     /**/

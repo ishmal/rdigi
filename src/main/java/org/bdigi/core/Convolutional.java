@@ -26,7 +26,7 @@
 package org.bdigi.core;
 
 
-public class Convolutional
+public class Convolutional {
 
 
     public static class Codec {
@@ -57,12 +57,12 @@ public class Convolutional
         }
 
 
-		public boolean getParity(int v) {
-			return Integer.bitCount(v) & 1;
+		public int parity(int v) {
+			return (Integer.bitCount(v) & 1);
 		}
 
 		public String toBits(int v) {
-			String s = java.lang.Integer.toString(v, 2)
+			String s = java.lang.Integer.toString(v, 2);
 			if (s.length() < 2) s = "0" + s;
 			return s;     
 		}
@@ -73,8 +73,8 @@ public class Convolutional
 			buf.append("    k    : " + k + "\n");
 			buf.append("    poly1: " + poly1 + "\n");
 			buf.append("    poly2: " + poly2 + "\n");
-			buf.append("    size : " + output.size + "\n");
-			for (int i=0 ; i<output.length() ; i++) {
+			buf.append("    size : " + output.length + "\n");
+			for (int i=0 ; i<output.length ; i++) {
 				buf.append("    " + i + " : " + toBits(output[i]) + "\n");
 			}
 			return buf.toString();
@@ -86,11 +86,8 @@ public class Convolutional
 
 	/**
 	 * Viterbi convolutional code decoder
-	 * @param k the constraint of the convolutional code
-	 * @param poly1 the left-hand generator polynomial
-	 * @param poly2 the right-hand generator polynomial   
 	 */
-	class Decoder extends Codec {
+	public static class Decoder extends Codec {
 	
 	    private int chunksize;
 	    private int depth;
@@ -98,12 +95,18 @@ public class Convolutional
 	    private int currPtr;
 	    private int prevPtr;
         private int lastMetric;
-        private int metrics[];//error metrics
-        private int history[];//the state history table
+        private int metrics[][];//error metrics
+        private int history[][];//the state history table
         private int seq[];
         private int distanceTable[][];
-	
-	    public Decoder(int k, int poly1, int poly2, int chunkSize = 8) {
+
+        /**
+         * Constructor
+         * @param k the constraint of the convolutional code
+         * @param poly1 the left-hand generator polynomial
+         * @param poly2 the right-hand generator polynomial   
+         */
+	    public Decoder(int k, int poly1, int poly2, int chunkSize) {
 	        super(k, poly1, poly2);
 	        this.chunksize = chunksize;
 	        depth    = chunkSize * 8;
@@ -116,21 +119,27 @@ public class Convolutional
 	        seq = new int[depth];
 	        genDistanceTable();
 	    }
+        public Decoder(int k, int poly1, int poly2) {
+            this(k, poly1, poly2, 8);
+        }
 
 
-		public void printMetrics(distance: Int = 8) {
-			println("==== Metrics/History ====")
-			var pp = prevPtr
+		public void printMetrics(int distance) {
+			System.out.println("==== Metrics/History ====");
+			int pp = prevPtr;
 			for (int i=0 ; i<distance ; i++) {
 				for (int j=0 ; j<nrStates ; j++) {
-					print("(%5d %5d) ".format(metrics(pp)(j), history(pp)(j)))                
+					System.out.print(String.format("(%5d %5d) ", metrics[pp][j], history[pp][j]));               
 				}
-				println;
+                System.out.println();
 				pp -= 1;
 				if (pp < 0)
 					pp = depth - 1;
 			}            
 		}
+        public void printMetrics() {
+            printMetrics(8);
+        }
 	
 		public void reset() {
 			metrics = new int[depth][nrStates];
@@ -152,11 +161,11 @@ public class Convolutional
 		 *                              
 		 */
 		private void genDistanceTable() {
-			int arr = new int[256][256];
-			for (int I=0 ; I<256 ; I++) {
+			int arr[][] = new int[256][256];
+			for (int i=0 ; i<256 ; i++) {
 			    for (int j=0 ; j<256 ; j++) {
-				    int dist = (int) Math.round(Math.sqrt((i * i) + (j * j)))
-				    arr(i)(j) = dist;
+				    int dist = (int) Math.round(Math.sqrt((i * i) + (j * j)));
+				    arr[i][j] = dist;
 				}
 			}
 			distanceTable = arr;
@@ -170,8 +179,8 @@ public class Convolutional
 			 * Since currPtr has been incremented after the last sample,
 			 * prevPtr points at the last recorded values.                  
 			 */         
-			int min  = Integer.MaxValue
-			int best = 0
+			int min  = Integer.MAX_VALUE;
+			int best = 0;
 			for (int i=0 ; i < nrStates ; i++) {
 				int v = metrics[prevPtr][i];
 				if (v < min)  {
@@ -190,16 +199,16 @@ public class Convolutional
 			 */
 			int p = prevPtr;
 			int ps = best;
-			seq[p] = best
+			seq[p] = best;
 			for (int i=1 ; i<depth-1 ; i++) {
 				ps = history[p][ps];
 				//println("p: " + p + " ps:" + ps)
 				seq[p--] = ps;
 				if (p < 0)
-					p = depth-1
+					p = depth-1;
 				}
 
-			lastMetric = metrics(prevPtr)(best) - metrics(p)(ps)
+			lastMetric = metrics[prevPtr][best] - metrics[p][ps];
 		
 			/**
 			 * Now work forward through the list of selected states saved in
@@ -208,9 +217,9 @@ public class Convolutional
 			 * That is the bit that must have been encoded by the convolutional
 			 * encoder.
 			 */                 
-			int res[] = new int[chunkSize];
-			for (int i=0 ; i<chunkSize ; i++) {
-				boolean bval = ((seq(p++) & 1) != 0);
+			boolean res[] = new boolean[chunksize];
+			for (int i=0 ; i<chunksize ; i++) {
+				boolean bval = ((seq[p++] & 1) != 0);
 				if (p >= depth)
 					p = 0;
 				res[i] = bval;
@@ -223,7 +232,6 @@ public class Convolutional
 		/**
 		 * @param sym0 bit with range 0..255
 		 * @param sym1 bit with range 0..255
-		 * @param output function to call with metrics info
 		 * @return decoded symbol if successful, else -1          
 		 */         
 		public boolean[] decodeOne(int sym0, int sym1) {
@@ -247,20 +255,19 @@ public class Convolutional
 			 *
 			 */
 			int branchMetric[] = new int[]{
-				distanceTable(    sym0)(    sym1),
-				distanceTable(    sym0)(255-sym1),
-				distanceTable(255-sym0)(    sym1),
-				distanceTable(255-sym0)(255-sym1)
+				distanceTable[    sym0][    sym1],
+				distanceTable[    sym0][255-sym1],
+				distanceTable[255-sym0][    sym1],
+				distanceTable[255-sym0][255-sym1]
 			};       
 			
 			return decodeOne(branchMetric);
 		}
   
 		/**
-		 * @param branchMetric.  An array with a positive integer distance
+		 * @param branchMetric  An array with a positive integer distance
 		 * from each of 00, 01, 10, and 11
-		 * @param output function to call with metrics info
-		 * @return decoded symbol if successful, else -1          
+		 * @return decoded symbol if successful, else -1
 		 */         
 		public boolean[] decodeOne(int branchMetric[]) {
 			//println("(%3d,%3d) : %4d %4d %4d %4d".format(sym0, sym1,
@@ -271,7 +278,7 @@ public class Convolutional
 			 * the metrics of two incoming states at the previous call.  Choose the lesser
 			 * of the two.  Record the metric, and indicate which incoming state was
 			 * chosen.
-			 */                  
+			 */
 			for (int n=0 ; n<nrStates ; n++) {
 				int s0      = n;
 				int s1      = n + nrStates;
@@ -288,7 +295,7 @@ public class Convolutional
 					metrics[currPtr][n] = metric1;
 					history[currPtr][n] = p1;
 				}
-			
+
 			}
 
 			//advance to record these values
@@ -298,54 +305,70 @@ public class Convolutional
 			//have we received a complete chunk? Then process it and
 			//return the decoded bits
 			boolean res[] = new boolean[0];
-			if ((currPtr % chunkSize) == 0) {
+			if ((currPtr % chunksize) == 0) {
 				res = traceback();
 			} else {
 				//check if values are growing too large. if so, then adjust
-				int halfMax = Integer.MaxValue / 2;
-		
+				int halfMax = Integer.MAX_VALUE / 2;
+
 				if (metrics[currPtr][0] > halfMax) {
-					for (i <- 0 until depth; j <- 0 until nrStates)
+					for (int i=0 ; i<depth ; i++)
+                        for (int j=0 ; j<nrStates ; j++)
 						metrics[i][j] -= halfMax;
 				}
 				if (metrics[currPtr][0] < -halfMax) {
-					for (i <- 0 until depth; j <- 0 until nrStates)
+                    for (int i=0 ; i<depth ; i++)
+                        for (int j=0 ; j<nrStates ; j++)
 						metrics[i][j] += halfMax;
 				}
 			}
-	
+
 			return res;
 		}
-	
+
 
 
 		/**
 		 * @param syms, seq of sym0, sym1 typles
-		 * @param finish whether we want to flush the buffer
 		 * @return decoded bits
-		 */         
-		public boolean[] decode(syms: Seq[(Int,Int)]) {
-			syms.map(sym=> decodeOne(sym._1, sym._2)).flatten
+		 */
+		public boolean[] decode(int syms[][]) {
+            int len = syms.length;
+            boolean out[] = new boolean[len*2];
+            int outp = 0;
+            for (int i=0 ; i<len ; i++) {
+                int sym[] = syms[i];
+                boolean res[] = decodeOne(sym[0], sym[1]);
+                out[outp++] = res[0];
+                out[outp++] = res[1];
+            }
+            return out;
 		}
-	
+
 		/**
 		 * @param dibit two bits in the 0 and 1 position
-		 * @param finish whether we want to flush the buffer
-		 * @return decoded symbol if mod of chunkSize or we want to flush          
-		 */         
-		public boolean[] decodeOneHard(dibit: Int) {
+		 * @return decoded symbol if mod of chunkSize or we want to flush
+		 */
+		public boolean[] decodeOneHard(int dibit) {
 			//255 for true 0 for false.  hard decisions
-			int sym1 = if ((dibit & 1) != 0) 255 else 0;
-			int sym0 = if ((dibit & 2) != 0) 255 else 0;
-
+			int sym1 = ((dibit & 1) != 0) ? 255 : 0;
+			int sym0 = ((dibit & 2) != 0) ? 255 : 0;
 			return decodeOne(sym0, sym1);
 		}
-	
-		public boolean[] decodeHard(dibits: Seq[Int]) {
-			return dibits.map(decodeOneHard).flatten;
+
+		public boolean[] decodeHard(int dibits[]) {
+            int len = dibits.length;
+            boolean out[] = new boolean[len*2];
+            int outp = 0;
+			for (int i=0 ; i<len ; i++) {
+                boolean res[] = decodeOneHard(dibits[i]);
+                out[outp++] = res[0];
+                out[outp++] = res[1];
+            }
+            return out;
 		}
-	
-	}
+
+	}//Decoder
 
 
 
@@ -359,7 +382,7 @@ public class Convolutional
 
         public Encoder(int k, int poly1, int poly2) {
             super(k, poly1, poly2);
-            mask = 0;
+            state = 0;
             statemask = size-1;
         }
 
@@ -374,69 +397,81 @@ public class Convolutional
 		}
 
 		public int[] encodeBits(boolean bits[]) {
-			return bits.map(encode);
+		    int len = bits.length;
+		    int xs[] = new int[len];
+		    for (int i=0 ; i<len ; i++) {
+		        xs[i] = encode(bits[i]);
+		    }
+			return xs;
 		}
 
-		public int[] encodeWord(int word, int cnt= 8) {
+		public int[] encodeWord(int word, int cnt) {
 			int c = cnt - 1;
-			val arr = Array.fill(cnt)(
-				{
-				val v = (((word >> c) & 1) != 0)
-				c -= 1
-				v
-				})
-			encodeBits(arr)
+			boolean arr[] = new boolean[cnt];
+			for (int i=0 ; i<cnt ; i++) {
+				boolean v = (((word >> c--) & 1) != 0);
+				arr[i] = v;
+			}
+			return encodeBits(arr);
+		}
+		public int[] encodeWord(int word) {
+		    return encodeWord(word, 8);
 		}
 
-		public int[] encodeWords(int words[], int cnt = 8) {
-			words.map(b=> encodeWord(b, cnt)).flatten
+		public int[] encodeWords(int words[], int cnt) {
+            int len = words.length;
+            int out[] = new int[len*2];
+            int outp = 0;
+            for (int i=0 ; i<len ; i++) {
+                int word = words[i];
+                int res[] = encodeWord(word, cnt);
+                out[outp++] = res[0];
+                out[outp++] = res[1];
+            }
+			return out;
+		}
+		public int[] encodeWords(int words[]) {
+		    return encodeWords(words, 8);
 		}
 
 		public int[] encodeBytes(byte bytes[]) {
-			bytes.map(b=> encodeWord(b, 8)).flatten
+            int len = bytes.length;
+            int out[] = new int[len*2];
+            int outp = 0;
+            for (int i=0 ; i<len ; i++) {
+                int res[] = encodeWord(bytes[i]);
+                out[outp++] = res[0];
+                out[outp++] = res[1];
+            }
+			return out;
 		}
 
 		public int[] encodeStr(String str) {
-			encodeBytes(str.getBytes)
+			return encodeBytes(str.getBytes());
 		}
 	}
 
 
 
 
-    public static Encoder encoder(k: Int, poly1: Int, poly2: Int) {
+    public static Encoder encoder(int k, int poly1, int poly2) {
         return new Encoder(k, poly1, poly2);
     }
 
-    public static Decoder decoder(k: Int, poly1: Int, poly2: Int, chunksize: Int = 8) {
+    public static Decoder decoder(int k, int poly1, int poly2, int chunksize) {
         return new Decoder(k, poly1, poly2, chunksize);
     }
-
+    
+    public static Decoder decoder(int k, int poly1, int poly2) {
+        return decoder(k, poly1, poly2, 8);
+    }
+    
     public static String toBits(int v) {
         String s = java.lang.Integer.toString(v, 2);
-        if (s.size < 2) s = "0" + s;
+        if (s.length() < 2) s = "0" + s;
         return s;       
     }
     
-    public static int[] fromBits(bits: Seq[Boolean], size: Int = 8) {
-        {
-        var buf = List[Int]()
-        var cnt = 0
-        var c = 0
-        for (b <- bits)
-            {
-            c <<= 1
-            if (b) c += 1
-            cnt += 1
-            if (cnt >= size)
-                {
-                cnt = 0
-                buf ::= c
-                c = 0
-                }
-            }
-        buf.reverse
-        }
 
 
 }

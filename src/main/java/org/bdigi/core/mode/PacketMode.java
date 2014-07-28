@@ -23,14 +23,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+package org.bdigi.core.mode;
+
+import org.bdigi.core.Crc;
+import org.bdigi.core.mode.Mode;
+
+import java.util.Arrays;
+
 /**
  * Mode for AX-25 packet communications.
  *
  * Note:  apparently 4800s/s seems to be necessary for this to work on 1200baud
  *  
- * @see http://www.tapr.org/pub_ax25.html
+ * @link http://www.tapr.org/pub_ax25.html
  */    
-public class Packet {
+public class PacketMode extends FskBase {
 
 
     public static class Addr {
@@ -44,12 +51,12 @@ public class Packet {
             this.ssid = ssid;
         }
 
-        public int encoded() {
+        public int[] encoded() {
             if (add == null) {
                 add = new int[7];
                 for (int i=0 ; i < 7 ; i++) {
-                    if (i < call.size)
-                        add[i] = ((call[i].toInt) << 1);
+                    if (i < call.length())
+                        add[i] = (((int)call.charAt(i)) << 1);
                     else if (i==6)
                         add[i] = (0x60 | (ssid << 1));
                     else
@@ -86,46 +93,54 @@ public class Packet {
         
         
         public int[] toOctets() {
-            var buf = [];
-            buf[buf.length] = 0x7e; // flag
-            buf = buf.concat(this.dest.encoded());
-            buf = buf.concat(this.src.encoded());
-            for (var ridx=0 ; ridx < this.rpts.length ; ridx++) {
-                buf = buf.concat(this.rpts[ridx].encoded());
+            int buf[] = new int[1024];
+            int ptr = 0;
+            buf[ptr++] = 0x7e; // flag
+            int addbuf[] = dest.encoded();
+            for (int i=0 ; i<addbuf.length ; i++)
+                buf[ptr++] = addbuf[i];
+            addbuf = src.encoded();
+            for (int i=0 ; i<addbuf.length ; i++)
+                buf[ptr++] = addbuf[i];
+            for (int ridx=0 ; ridx < this.rpts.length ; ridx++) {
+                addbuf = rpts[ridx].encoded();
+                for (int i=0 ; i<addbuf.length ; i++)
+                    buf[ptr++] = addbuf[i];
             }
-            buf[buf.length] = this.ctrl;
-            buf[buf.length] = this.pid;
-            var ilen = info.length;
-            for (iidx=0 ; iidx < ilen ; iidx++) {
+            buf[ptr++] = this.ctrl;
+            buf[ptr++] = this.pid;
+            int ilen = info.length;
+            for (int iidx=0 ; iidx < ilen ; iidx++) {
                 buf[buf.length] = info[iidx];
             }
-            var crc = new Crc();
-            for (var bidx=0 ; bidx < buf.length ; bidx++) {
+            Crc crc = new Crc();
+            for (int bidx=0 ; bidx < buf.length ; bidx++) {
                 crc.update(buf[bidx]);
             }
-            var crcv = crc.value();
-            var fcslo = (crcv & 0xff) ^ 0xff;
-            var fcshi = (crcv >>   8) ^ 0xff;
-            buf[buf.length] = fcslo;
-            buf[buf.length] = fcshi;
-            buf[buf.length] = 0x7e; // flag
-            return buf;
+            int crcv = crc.getValue();
+            int fcslo = (crcv & 0xff) ^ 0xff;
+            int fcshi = (crcv >>   8) ^ 0xff;
+            buf[ptr++] = fcslo;
+            buf[ptr++] = fcshi;
+            buf[ptr] = 0x7e; // flag
+            return Arrays.copyOf(buf, ptr);
         }
 
         public String toString() {
             StringBuilder buf = new StringBuilder();
             buf.append(src.toString() + "=>" + dest.toString());
 
-            for (var ridx=0 ; ridx < rpts.length ; ridx++) {
-                buf.append(":").append(r.toString());
+            for (int ridx=0 ; ridx < rpts.length ; ridx++) {
+                buf.append(":").append(rpts[ridx].toString());
             }
-            buf.append(" [").append(pid.toString()).append("]: ");
-            if (pid !== 0) {
-                buf.append(String.fromCharCode.apply(null, info));
+            buf.append(" [").append(pid).append("]: ");
+            if (pid != 0) {
+                for (int i=0 ; i<info.length ; i++)
+                    buf.append((char)info[i]);
             } else {
-                buf.append("{").append(info(0)).append(",").append(info.length).append("}");
-                buf.append(String.fromCharCode.apply(null, info));
-            }
+                buf.append("{").append(info[0]).append(",").append(info.length).append("}");
+                for (int i=0 ; i<info.length ; i++)
+                    buf.append((char)info[i]);           }
             return buf.toString();
         }
     }//Packet
@@ -170,21 +185,22 @@ public class Packet {
     public final static int SFRAME       = 1;
     public final static int UFRAME       = 2;
 
-    public static create(int data[]) {
+    private static Addr getAddr(int arr[], int offset) {
+        int bytes[] = arr.slice(offset, offset+6).map(function(v) { return v >> 1; });
+        String call = String.fromCharCode.apply(null, bytes).trim();
+        int ssid = (arr[offset+6] >> 1) & 0xf;
+        return new PacketAddr(call, ssid);
+    }
 
-        Addr getAddr(int arr[], int offset) {
-            int bytes[] = arr.slice(offset, offset+6).map(function(v) { return v >> 1; });
-            String call = String.fromCharCode.apply(null, bytes).trim();
-            int ssid = (arr[offset+6] >> 1) & 0xf;
-            return new PacketAddr(call, ssid);
-        }
+    public static Packet create(int data[]) {
+
 
         int pos = 0;
         Addr dest = getAddr(data, pos);
         pos += 7;
         Addr src  = getAddr(data, pos);
         pos += 7;
-        Addr rpts = [];
+        Addr rpts[] = [];
         //println("lastbyte:"+data(pos-1))
         while (rpts.length < 8 && pos < data.length-7 && ((data[pos - 1] & 128) !== 0) ) {
             rpts[rpts.length] = getAddr(data, pos);
@@ -215,7 +231,7 @@ public class Packet {
     private Crc crc;
 
 
-    public Packet(Digi par) {
+    public PacketMode(Digi par) {
         super(par, "", 4800);
         setShift(200.0);
         setRate(300.0);
@@ -264,7 +280,7 @@ public class Packet {
      
     
     
-    public void trace(msg) {
+    public void trace(String msg) {
         par.trace("packet:" + msg);
     }
     
@@ -288,7 +304,7 @@ public class Packet {
      */
     public void receiveBit(boolean inBit) {
     
-        if (!self.isMiddleBit(inBit)) {
+        if (!isMiddleBit(inBit)) {
             return;
         }
 
