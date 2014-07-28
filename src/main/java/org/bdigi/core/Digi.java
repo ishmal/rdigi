@@ -65,6 +65,9 @@ public class Digi {
 
     }
 
+    public void showScope(double xs[][]) {
+        //
+    }
     public void puttext(String s) {
 
     }
