@@ -7,3 +7,5 @@ release.properties
 /.idea/workspace.xml
 
 *.iml
+
+/.idea/libraries/
