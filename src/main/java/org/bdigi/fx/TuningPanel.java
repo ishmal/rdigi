@@ -48,325 +48,329 @@ import javafx.scene.input.{KeyEvent,MouseEvent,ScrollEvent}
 public class TuningPanel extends AnchorPane {
 
 
-    Digi par;
+    private Digi par;
+    final static double minFreq = 0.0;
+    final static double maxFreq = 2500.0;
+	final static int initialWidth = 500;
+	final static int initialHeight = 100;
+	final static int TUNER_HEIGHT = 24;
+	private Canvas canvas;
+	private Context ctx;
+	private WaterfallArea waterfallArea;
+	private TunerArea tunerArea;
+	private ScopeArea scopeArea;
     
     public TuningPanel(Digi par) {
         this.par = par;
+		AnchorPane.setLeftAnchor(this, 0);
+		AnchorPane.setTopAnchor(this, 0);
+		AnchorPane.setRightAnchor(this, 0);
+		AnchorPane.setBottomAnchor(this, 0);
+        canvas = new Canvas(initialWidth, initialHeight);
+		AnchorPane.setLeftAnchor(canvas, 0);
+		AnchorPane.setTopAnchor(canvas, 0);
+		AnchorPane.setRightAnchor(canvas, 0);
+		AnchorPane.setBottomAnchor(canvas, 0);
+		getChildren.add(canvas);
+		ctx = canvas.getGraphicsContext2D();
+
+		waterfall = new WaterfallArea(initialWidth, initialHeight - TUNER_HEIGHT);
+		tuner = new TunerArea(initialWidth, TUNER_HEIGHT);
+		scope = new ScopeArea(initialHeight - TUNER_HEIGHT, initialHeight - TUNER_HEIGHT);
+		ChangeListener resizeListener = new ChangeListener<Number>() {
+
+			public void changed(observableValue: ObservableValue[_ <: Number], oldval: Number, newval: Number){
+				int w = (getWidth != 0) ? getWidth.toInt : 50;
+				int h = (getHeight != 0) ? getHeight.toInt : 50;
+				trace("w: " + w + "  h:" + h);
+				canvas.setWidth(w);
+				canvas.setHeight(h);
+				waterfall = new WaterfallArea(w, h - TUNER_HEIGHT);
+				tuner     = new TunerArea(w, TUNER_HEIGHT);
+				scope     = new ScopeArea(h - TUNER_HEIGHT, h - TUNER_HEIGHT);
+				}
+		};
+	
+		widthProperty.addListener(resizeListener);
+		heightProperty.addListener(resizeListener);
     }
 
 
 
     class Waterfall {
     
+        private Image img;
+        private int nrPix;
+        private int pixels;
+        private int lastRow;
+        private PixelWriter writer;
+        private int colors[];
+        private int pslen;
+        private int psIndices;
+        private int psbuf[];
     
         public WaterfallArea(int width, int height) {
         
-        val img     = new WritableImage(width, height)
-        val nrPix   = width * height
-        val pixels  = Array.ofDim[Int](nrPix)
-        val lastRow = nrPix - width
-        val writer  = img.getPixelWriter
-        val format  = PixelFormat.getIntArgbInstance
+            img     = new WritableImage(width, height);
+            nrPix   = width * height;
+            pixels  = new int[nrPix];
+            lastRow = nrPix - width;
+            writer  = img.getPixelWriter();
+            format  = PixelFormat.getIntArgbInstance();
+            genColors();
+        }
                 
-        private val colors = Array.tabulate(256)( i =>
-            {
-            val prop   = i.toDouble / 256.0
-            val hue    = 240.0 - 150.0 * prop
-            val bright = 0.3 + prop / 2
-            val c = Color.hsb(hue, 1.0, bright)
-            var col = 0xff
-            col = (col << 8) + (c.getRed   * 255).toInt
-            col = (col << 8) + (c.getGreen * 255).toInt
-            col = (col << 8) + (c.getBlue  * 255).toInt
-            col
-            })
-            
         /**
          * Make a palette. tweak this often
          */                 
-        private val colors2 = Array.tabulate(256)( i=>
-            {
-            val r = if (i < 170) 0 else (i-170) * 3
-            val g = if (i <  85) 0 else if (i < 170) (i-85) * 3 else 255
-            val b = if (i <  85) i * 3 else 255
-            var col = 0xff
-            col = (col << 8) + r
-            col = (col << 8) + g
-            col = (col << 8) + b
-            col
-            })
+        private void genColors() {
+            colors = new int[256];
+            for (int i=0 ; i<256 ; i++) {
+				val r = (i < 170) ? 0 : (i-170) * 3;
+				val g = (i <  85) ? 0 : (i < 170) ? (i-85) * 3 : 255;
+				val b = (i <  85) ? i * 3 : 255;
+				var col = 0xff;
+				col = (col << 8) + r;
+				col = (col << 8) + g;
+				col = (col << 8) + b;
+				colors[i] = col;
+            }
+        }
             
 
         
-        /*Scale the power spectrum bins onto the output width.  Do once & reuse. */
-        private var pslen = -1
-        private var psIndices = Array.fill(width)(0)
-        private var psbuf = Array.fill(100)(0)
-                
         //only call from javafx thread
-        def redraw() =
-            {
-            if (pslen != psbuf.length)
-                {
-                pslen = psbuf.length
-                psIndices = Array.tabulate(width)(_ * pslen / width)
+        private void redraw() {
+            if (pslen != psbuf.length) {
+                pslen = psbuf.length;
+                psIndices = new int[width];
+                for (int i=0 ; i<width ; i++) {
+                    psIndices[i] = i * pslen / width;
                 }
-            val pix = pixels
-            System.arraycopy(pix, width, pix, 0, lastRow)
-            var pixptr = lastRow
-            for (i <- 0 until width)
-                {
-                val p = psbuf(psIndices(i))
-                pix(pixptr) = colors2(p & 0xff)
-                pixptr += 1
-                }
+            }
+            int pix[] = pixels;
+            System.arraycopy(pix, width, pix, 0, lastRow);
+            int pixptr = lastRow;
+            for (int i=0 ; i<width ; i++) {
+                int p = psbuf[psIndices[i]];
+                pix[pixptr++] = colors[p & 0xff];
+            }
             //trace("iw:" + iwidth + "  ih:" + iheight + "  pix:" + pix.size + " pslen:" + pslen)
-            writer.setPixels(0, 0, width, height, format, pix, 0, width)
-            ctx.drawImage(img, 0.0, 0.0, width, height)
+            writer.setPixels(0, 0, width, height, format, pix, 0, width);
+            ctx.drawImage(img, 0.0, 0.0, width, height);
             }
 
-        def update(ps: Array[Int]) =
-            {
-            psbuf = ps.clone
-            }
+        def update(int ps[]) {
+            psbuf = ps.clone();
+        }
                 
-        }//Waterfall
+    }//Waterfall
 
 
     class TunerArea {
     
+        private int width;
+        private int height;
+        private double range;
+    
         public TunerArea(int width, int height) {
+            this.width = width;
+            this.height = height;
+            range = maxFreq - minFreq;
+			addEventHandler(MouseEvent.ANY, new EventHandler<MouseEvent>() {
+				public void handle(MouseEvent evt) {
+					switch (evt.getEventType()) {
+						case MouseEvent.MOUSE_CLICKED :
+						     setFrequency(x2freq(evt.getX));
+						     break;
+						case MouseEvent.MOUSE_DRAGGED :
+						    setFrequencu(x2freq(evt.getX));
+						    break;
+						default:
+						}
+					}
+			});
+			
+			setOnScroll(new EventHandler<ScrollEvent>() {
+				public void handle(ScrollEvent evt) {
+					setFrequency((evt.getDeltaY > 0) ? freq + 1 : freq - 1);
+					redraw();
+				}
+			});
+        }
 
-        val range = maxFreq - minFreq
+   
+        double getFrequency() {
+            return par.getFrequency();
+        }
+        
+        void setFrequency(double v) {
+            par.setFrequency(v);
+        }
+
+        function getBandwidth() {
+            return par.getBandwidth();
+        }
             
-        def freq = par.getFrequency
-        def freq_=(v: Double) =
-            {
-            par.setFrequency(v)
-            }
+        void redraw() {
+            int top = (int)(getHeight() - height);
             
-        def bw = par.mode.bandwidth
-            
-        def redraw = 
-            {
-            val top = getHeight.toInt - height
-            
-            ctx.setFill(Color.BLACK)
-            ctx.fillRect(0, top, width.toInt, height.toInt)
+            ctx.setFill(Color.BLACK);
+            ctx.fillRect(0, top, width.toInt, height.toInt);
             
             //draw the tickmarks
-            val hzWidth   = width / range
-            val tickRes   = 25
-            val tickSpace = hzWidth * tickRes
-            val nrTicks = (range / tickRes).toInt
+            double hzWidth   = width / range;
+            int tickRes   = 25;
+            double tickSpace = hzWidth * tickRes;
+            int nrTicks = (int)(range / tickRes);
     
-            for (i <- 1 until nrTicks)
-                {
-                val tick = i * tickRes
-                val hx = i * tickSpace
-                if (tick % 500 == 0)
-                    {
-                    ctx.setFill(Color.GREEN)
-                    ctx.fillRect(hx, top, 2.0, 10.0)
-                    val str = "%d".format(tick)
-                    ctx.setFill(Color.CYAN)
-                    ctx.fillText(str, hx-16.0, top+19.0)
-                    }
-                else if (tick % 100 == 0)
-                    {
-                    ctx.setFill(Color.GREEN)
-                    ctx.fillRect(hx, top, 2.0, 5.0)
-                    }
-                else
-                    {
+            for (int i=1 ; i<nrTicks ; i++) {
+                int tick = i * tickRes;
+                double hx = i * tickSpace;
+                if (tick % 500 == 0) {
+                    ctx.setFill(Color.GREEN);
+                    ctx.fillRect(hx, top, 2.0, 10.0);
+                    String str = String.format("%d", tick);
+                    ctx.setFill(Color.CYAN);
+                    ctx.fillText(str, hx-16.0, top+19.0);
+                } else if (tick % 100 == 0) {
+                    ctx.setFill(Color.GREEN);
+                    ctx.fillRect(hx, top, 2.0, 5.0);
+                } else {
                     ctx.setFill(Color.GREEN)
                     ctx.fillRect(hx, top, 2.0, 2.0)
-                    }
                 }
+            }
     
             
-            ctx.setFill(Color.GREEN)
-            val fx = width * freq / range
-            ctx.fillRect(fx, 3, 1.0, getHeight-10)
+            ctx.setFill(Color.GREEN);
+            double fx = width * freq / range;
+            ctx.fillRect(fx, 3, 1.0, getHeight-10);
             
-            if (par.bandwidth > 0.0)
-                {
-                ctx.setFill(Color.RED)
-                val lox = width * (freq - bw * 0.5) / range
-                ctx.fillRect(lox, top+5, 1.0, 10)
-                val hix = width * (freq + bw * 0.5) / range
-                ctx.fillRect(hix, top+5, 1.0, 10)
-                }
+            if (getBandwidth() > 0.0) {
+                ctx.setFill(Color.RED);
+                double lox = width * (freq - bw * 0.5) / range;
+                ctx.fillRect(lox, top+5, 1.0, 10);
+                double hix = width * (freq + bw * 0.5) / range;
+                ctx.fillRect(hix, top+5, 1.0, 10);
             }
+        }
             
         
-        def x2freq(x: Double) =
-            {
-            range * x / width
+        private double x2freq(double x) {
+            return range * x / width;
             }
         
         
-        addEventHandler(MouseEvent.ANY, new EventHandler[MouseEvent]
-            {
-            def handle(evt: MouseEvent)
-                {
-                evt.getEventType match
-                    {
-                    case MouseEvent.MOUSE_CLICKED => freq = x2freq(evt.getX)
-                    case MouseEvent.MOUSE_DRAGGED => freq = x2freq(evt.getX)
-                    case _ =>
-                    }
-                }
-            }) 
-            
-        setOnScroll(new EventHandler[ScrollEvent]
-            {
-            def handle(evt: ScrollEvent)
-                {
-                freq =  if (evt.getDeltaY > 0) freq + 1 else freq - 1 
-                redraw
-                }
-            });
         
-        }//Tuner
+    }//Tuner
     
 
-    class ScopeArea(width: Int, height: Int) extends Canvas(width, height)
-        {
-        private val BUFSIZE = 512
-        private val buf = Array.fill(BUFSIZE)((0.0,0.0))
-        private var bufPtr = 0
-        private var lastx = 0.0
-        private var lasty = 0.0
-        private val vscale = 10.0
-        private val timeScale = 2
-        val ctx = canvas.getGraphicsContext2D
+    class ScopeArea extends Canvas {
+
+		private int BUFSIZE = 512
+		private double buf[][];
+		private int bufptr;
+		private double lastx;
+		private double lasty;
+		private double vscale;
+		private int timeScale;
+		Context ctx;
+
+        public ScopeArea(int width, int height) {
+            super(width, height);
+            buf = new double[0][2];
+            butptr = 0;
+            lastx = 0.0;
+            lasty = 0.0;
+            vscale = 10.0;
+            timeScale = 2;
+
+			ctx = canvas.getGraphicsContext2D();
+		}
         
         //only call from javafx thread
-        def redraw =
-            {
-            val w   = width
-            val w2  = w * 0.5
-            val h   = height
-            val h2  = h * 0.5
-            val x0  = w2
-            val y0  = h2
-            var ptr = bufPtr
-            var x   = 0.0
-            var y   = 0.0
+        public void redraw() {
+            int w   = width;
+            double w2  = w * 0.5;
+            int h   = height
+            double h2  = h * 0.5;
+            double x0  = w2
+            double y0  = h2
+            int ptr = bufptr;
+            double x   = 0.0;
+            double y   = 0.0;
 
             //crosshairs
-            ctx.setFill(Color.BLACK)
-            ctx.fillRect(0, 0, w, h)
-            ctx.setStroke(Color.WHITE)
-            ctx.strokeLine(0, h2,  w, h2)
-            ctx.strokeLine(w2,  0, w2,  h)
+            ctx.setFill(Color.BLACK);
+            ctx.fillRect(0, 0, w, h);
+            ctx.setStroke(Color.WHITE);
+            ctx.strokeLine(0, h2,  w, h2);
+            ctx.strokeLine(w2,  0, w2,  h);
 
             //the trace line
-            ctx.setStroke(Color.YELLOW)
-            for (i <- 0 until BUFSIZE by timeScale)
-                {
-                val v = buf(ptr)
-                val vx = v._1
-                val vy = v._2
-                ptr = (ptr + 1) % BUFSIZE
-                x = x0 + vx * vscale
-                y = y0 + vy * vscale
-                ctx.strokeLine(lastx, lasty, x, y)
-                lastx = x
-                lasty = y
+            ctx.setStroke(Color.YELLOW);
+            for (int i=0 ; i<BUFSIZE ; i+=timeScale) {
+                double v[] = buf[ptr];
+                val vx = v[0];
+                val vy = v[1];
+                ptr = (ptr + 1) % BUFSIZE;
+                x = x0 + vx * vscale;
+                y = y0 + vy * vscale;
+                ctx.strokeLine(lastx, lasty, x, y);
+                lastx = x;
+                lasty = y;
                 }
-            ctx.setFill(Color.RED)
-            ctx.fillRect(x-2.0, y-2.0, 4.0, 4.0)
+            ctx.setFill(Color.RED);
+            ctx.fillRect(x-2.0, y-2.0, 4.0, 4.0);
             }    
 
  
-         def update(x: Double, y:Double) = 
-            {
+         public void update(double x, double y) {
             buf(bufPtr) = (x, y)
-            bufPtr = (bufPtr + 1) % BUFSIZE
+            bufPtr = (bufPtr + 1) % BUFSIZE;
             }
             
                   
     } //scope
     
-    def trace(msg: String) =
-        par.trace(msg)
+    public void trace(String msg) {
+        par.trace(msg);
+    }
     
-    def error(msg: String) =
-        par.error(msg)
+    public void error(String msg) {
+        par.error(msg);
+    }
     
-    AnchorPane.setLeftAnchor(this, 0)
-    AnchorPane.setTopAnchor(this, 0)
-    AnchorPane.setRightAnchor(this, 0)
-    AnchorPane.setBottomAnchor(this, 0)
 
-    
-    val minFreq = 0.0
-    val maxFreq = 2500.0
-    
-    
-    private val initialWidth = 500
-    private val initialHeight = 100
-    private val TUNER_HEIGHT = 24
 
-    val canvas = new Canvas(initialWidth, initialHeight)
-    AnchorPane.setLeftAnchor(canvas, 0)
-    AnchorPane.setTopAnchor(canvas, 0)
-    AnchorPane.setRightAnchor(canvas, 0)
-    AnchorPane.setBottomAnchor(canvas, 0)
-    getChildren.add(canvas)
-    val ctx = canvas.getGraphicsContext2D
-
-    var waterfall = new WaterfallArea(initialWidth, initialHeight - TUNER_HEIGHT)
-    var tuner     = new TunerArea(initialWidth, TUNER_HEIGHT)
-    var scope     = new ScopeArea(initialHeight - TUNER_HEIGHT, initialHeight - TUNER_HEIGHT)
-
-    private val resizeListener = new ChangeListener[Number]
-        {
-        override def changed(observableValue: ObservableValue[_ <: Number], oldval: Number, newval: Number)
-            {
-            val w = if (getWidth != 0) getWidth.toInt else 50
-            val h = if (getHeight != 0) getHeight.toInt else 50
-            println("w: " + w + "  h:" + h)
-            canvas.setWidth(w)
-            canvas.setHeight(h)
-            waterfall = new WaterfallArea(w, h - TUNER_HEIGHT)
-            tuner     = new TunerArea(w, TUNER_HEIGHT)
-            scope     = new ScopeArea(h - TUNER_HEIGHT, h - TUNER_HEIGHT)
-            }
-        }
-    
-    widthProperty.addListener(resizeListener)
-    heightProperty.addListener(resizeListener)
-
-    class Redrawer extends EventHandler[ActionEvent]
-        {
-        override def handle(event: javafx.event.ActionEvent) =
-            {
-            waterfall.redraw
-            tuner.redraw
-            if (showScope)
-                scope.redraw
-            }       
-        }
+    class Redrawer extends EventHandler<ActionEvent> {
+        public void handle(javafx.event.ActionEvent event) {
+            waterfall.redraw();
+            tuner.redraw();
+            scope.redraw();
+        }       
+    }
         
-    val oneFrameAmt = Duration.millis(70);
-    var oneFrame = new KeyFrame(oneFrameAmt, new Redrawer)
+    private void start() {
+        val oneFrameAmt = Duration.millis(70);
+        var oneFrame = new KeyFrame(oneFrameAmt, new Redrawer)
 
-    TimelineBuilder.create()
-       .cycleCount(Animation.INDEFINITE)
-       .keyFrames(oneFrame)
-       .build()
-       .play();
+		TimelineBuilder.create()
+		   .cycleCount(Animation.INDEFINITE)
+		   .keyFrames(oneFrame)
+		   .build()
+		   .play();
+	}
 
-    def update(ps: Array[Int]) =
-        waterfall.update(ps)
+    public void update(int ps[]) {
+        waterfall.update(ps);
+    }
 
-    def updateScope(x: Double, y: Double) =
-        scope.update(x, y)
+    public void updateScope(double buf[][]) {
+        scope.update(buf);
+    }
         
-    var showScope = true
 
 }
 
