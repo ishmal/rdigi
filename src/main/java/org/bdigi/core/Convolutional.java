@@ -106,10 +106,10 @@ public class Convolutional {
          * @param poly1 the left-hand generator polynomial
          * @param poly2 the right-hand generator polynomial   
          */
-	    public Decoder(int k, int poly1, int poly2, int chunkSize) {
+	    public Decoder(int k, int poly1, int poly2, int chunksize) {
 	        super(k, poly1, poly2);
 	        this.chunksize = chunksize;
-	        depth    = chunkSize * 8;
+	        depth = chunksize * 8;
 	        nrStates = 1 << (k - 1);
 	        currPtr = 0;
 	        prevPtr = depth - 1;

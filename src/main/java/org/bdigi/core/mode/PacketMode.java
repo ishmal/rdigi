@@ -26,6 +26,7 @@
 package org.bdigi.core.mode;
 
 import org.bdigi.core.Crc;
+import org.bdigi.core.Digi;
 import org.bdigi.core.mode.Mode;
 
 import java.util.Arrays;
@@ -41,11 +42,11 @@ public class PacketMode extends FskBase {
 
 
     public static class Addr {
-    
+
         private String call;
         private int ssid;
         private int add[]; //cache
-        
+
         public Addr(String call, int ssid) {
             this.call = call;
             this.ssid = ssid;
@@ -54,26 +55,26 @@ public class PacketMode extends FskBase {
         public int[] encoded() {
             if (add == null) {
                 add = new int[7];
-                for (int i=0 ; i < 7 ; i++) {
+                for (int i = 0; i < 7; i++) {
                     if (i < call.length())
-                        add[i] = (((int)call.charAt(i)) << 1);
-                    else if (i==6)
+                        add[i] = (((int) call.charAt(i)) << 1);
+                    else if (i == 6)
                         add[i] = (0x60 | (ssid << 1));
                     else
                         add[i] = 0x40;   // shifted space
-                 }
+                }
             }
             return add;
         }
 
         public String toString() {
-            return (ssid >= 0) ?  call + "-" + ssid  : call;
+            return (ssid >= 0) ? call + "-" + ssid : call;
         }
-  
-    }//Add
+
+    }//Addr
 
     public static class Packet {
-    
+
         private Addr dest;
         private Addr src;
         private Addr rpts[];
@@ -84,42 +85,42 @@ public class PacketMode extends FskBase {
 
         public Packet(Addr dest, Addr src, Addr rpts[], int ctrl, int pid, int[] info) {
             this.dest = dest;
-            this.src  = src;
+            this.src = src;
             this.rpts = rpts;
             this.ctrl = ctrl;
-            this.pid  = pid;
+            this.pid = pid;
             this.info = info;
         }
-        
-        
+
+
         public int[] toOctets() {
             int buf[] = new int[1024];
             int ptr = 0;
             buf[ptr++] = 0x7e; // flag
             int addbuf[] = dest.encoded();
-            for (int i=0 ; i<addbuf.length ; i++)
+            for (int i = 0; i < addbuf.length; i++)
                 buf[ptr++] = addbuf[i];
             addbuf = src.encoded();
-            for (int i=0 ; i<addbuf.length ; i++)
+            for (int i = 0; i < addbuf.length; i++)
                 buf[ptr++] = addbuf[i];
-            for (int ridx=0 ; ridx < this.rpts.length ; ridx++) {
+            for (int ridx = 0; ridx < this.rpts.length; ridx++) {
                 addbuf = rpts[ridx].encoded();
-                for (int i=0 ; i<addbuf.length ; i++)
+                for (int i = 0; i < addbuf.length; i++)
                     buf[ptr++] = addbuf[i];
             }
             buf[ptr++] = this.ctrl;
             buf[ptr++] = this.pid;
             int ilen = info.length;
-            for (int iidx=0 ; iidx < ilen ; iidx++) {
+            for (int iidx = 0; iidx < ilen; iidx++) {
                 buf[buf.length] = info[iidx];
             }
             Crc crc = new Crc();
-            for (int bidx=0 ; bidx < buf.length ; bidx++) {
+            for (int bidx = 0; bidx < buf.length; bidx++) {
                 crc.update(buf[bidx]);
             }
             int crcv = crc.getValue();
             int fcslo = (crcv & 0xff) ^ 0xff;
-            int fcshi = (crcv >>   8) ^ 0xff;
+            int fcshi = (crcv >> 8) ^ 0xff;
             buf[ptr++] = fcslo;
             buf[ptr++] = fcshi;
             buf[ptr] = 0x7e; // flag
@@ -130,94 +131,101 @@ public class PacketMode extends FskBase {
             StringBuilder buf = new StringBuilder();
             buf.append(src.toString() + "=>" + dest.toString());
 
-            for (int ridx=0 ; ridx < rpts.length ; ridx++) {
+            for (int ridx = 0; ridx < rpts.length; ridx++) {
                 buf.append(":").append(rpts[ridx].toString());
             }
             buf.append(" [").append(pid).append("]: ");
             if (pid != 0) {
-                for (int i=0 ; i<info.length ; i++)
-                    buf.append((char)info[i]);
+                for (int i = 0; i < info.length; i++)
+                    buf.append((char) info[i]);
             } else {
                 buf.append("{").append(info[0]).append(",").append(info.length).append("}");
-                for (int i=0 ; i<info.length ; i++)
-                    buf.append((char)info[i]);           }
+                for (int i = 0; i < info.length; i++)
+                    buf.append((char) info[i]);
+            }
             return buf.toString();
         }
+        private static Addr getAddr(int arr[], int offset) {
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < 6; i++) {
+                b.append((char) (arr[offset + i] >> 1));
+            }
+            String call = b.toString();
+            int ssid = (arr[offset + 6] >> 1) & 0xf;
+            return new Addr(call, ssid);
+        }
+
+        public static Packet create(int data[]) {
+
+
+            int pos = 0;
+            Addr dest = getAddr(data, pos);
+            pos += 7;
+            Addr src = getAddr(data, pos);
+            pos += 7;
+            Addr buf[] = new Addr[10];
+            int i;
+            for (i = 0; i < 8; i++) {
+                if (pos >= data.length - 7 || ((data[pos - 1] & 128) == 0))
+                    break;
+                buf[i] = getAddr(data, pos);
+                pos += 7;
+            }
+            Addr rpts[] = Arrays.copyOf(buf, i);
+            int ctrl = data[pos++];
+
+            int typ = ((ctrl & 1) == 0) ? IFRAME : ((ctrl & 2) == 0) ? SFRAME : UFRAME;
+
+            int pid = (typ == IFRAME) ? data[pos] : 0;
+            if (typ == IFRAME) pos++;
+
+            int info[] = Arrays.copyOfRange(data, pos, data.length);
+
+            return new Packet(dest, src, rpts, 0, 0, info);
+        }
+
     }//Packet
 
-    public final static int PID_X25           = 0x01;  // ISO 8208/CCITT X.25 PLP
-    public final static int PID_TCPIP_COMP    = 0x06;  // Compressed TCP/IP packet. Van Jacobson (RFC 1144)
-    public final static int PID_TCPIP_UNCOMP  = 0x07;  // Uncompressed TCP/IP packet. Van Jacobson (RFC 1144)
-    public final static int PID_FRAG          = 0x08;  // Segmentation fragment
-    public final static int PID_AX25_FLAG1    = 0x10;  // AX.25 layer 3 implemented.
-    public final static int PID_AX25_FLAG2    = 0x20;  // AX.25 layer 3 implemented.
-    public final static int PID_AX25_MASK     = 0x30;  // AX.25 layer 3 implemented.
-    public final static int PID_TEXNET        = 0xc3;  // TEXNET datagram protocol
-    public final static int PID_LQP           = 0xc4;  // Link Quality Protocol
-    public final static int PID_APPLETALK     = 0xca;  // Appletalk
+    public final static int PID_X25 = 0x01;  // ISO 8208/CCITT X.25 PLP
+    public final static int PID_TCPIP_COMP = 0x06;  // Compressed TCP/IP packet. Van Jacobson (RFC 1144)
+    public final static int PID_TCPIP_UNCOMP = 0x07;  // Uncompressed TCP/IP packet. Van Jacobson (RFC 1144)
+    public final static int PID_FRAG = 0x08;  // Segmentation fragment
+    public final static int PID_AX25_FLAG1 = 0x10;  // AX.25 layer 3 implemented.
+    public final static int PID_AX25_FLAG2 = 0x20;  // AX.25 layer 3 implemented.
+    public final static int PID_AX25_MASK = 0x30;  // AX.25 layer 3 implemented.
+    public final static int PID_TEXNET = 0xc3;  // TEXNET datagram protocol
+    public final static int PID_LQP = 0xc4;  // Link Quality Protocol
+    public final static int PID_APPLETALK = 0xca;  // Appletalk
     public final static int PID_APPLETALK_ARP = 0xcb;  // Appletalk ARP
-    public final static int PID_ARPA_IP       = 0xcc;  // ARPA Internet Protocol
-    public final static int PID_ARPA_ARP      = 0xcd;  // ARPA Address Resolution
-    public final static int PID_FLEXNET       = 0xce;  // FlexNet
-    public final static int PID_NETROM        = 0xcf;  // NET/ROM
-    public final static int PID_NO_3          = 0xf0;  // No layer 3 protocol implemented.
-    public final static int PID_ESCAPE        = 0xff;  // Escape character. Next octet contains more Level 3 protocol information.
-    
+    public final static int PID_ARPA_IP = 0xcc;  // ARPA Internet Protocol
+    public final static int PID_ARPA_ARP = 0xcd;  // ARPA Address Resolution
+    public final static int PID_FLEXNET = 0xce;  // FlexNet
+    public final static int PID_NETROM = 0xcf;  // NET/ROM
+    public final static int PID_NO_3 = 0xf0;  // No layer 3 protocol implemented.
+    public final static int PID_ESCAPE = 0xff;  // Escape character. Next octet contains more Level 3 protocol information.
+
     /**
      * Frame identifiers
      */
-    public final static int FID_NONE     =  0;  // Not an ID
-    public final static int FID_C        =  1;  // Layer 2 Connect Request
-    public final static int FID_SABM     =  2;  // Layer 2 Connect Request
-    public final static int FID_D        =  3;  // Layer 2 Disconnect Request
-    public final static int FID_DISC     =  4;  // Layer 2 Disconnect Request
-    public final static int FID_I        =  5;  // Information frame
-    public final static int FID_RR       =  6;  // Receive Ready. System Ready To Receive
-    public final static int FID_RNR      =  7;  // Receive Not Ready. TNC Buffer Full
-    public final static int FID_NR       =  8;  // Receive Not Ready. TNC Buffer Full
-    public final static int FID_RJ       =  9;  // Reject Frame. Out of Sequence or Duplicate
-    public final static int FID_REJ      = 10;  // Reject Frame. Out of Sequence or Duplicate
-    public final static int FID_FRMR     = 11;  // Frame Reject. Fatal Error
-    public final static int FID_UI       = 12;  // Unnumbered Information Frame. "Unproto"
-    public final static int FID_DM       = 13;  // Disconnect Mode. System Busy or Disconnected.
+    public final static int FID_NONE = 0;  // Not an ID
+    public final static int FID_C = 1;  // Layer 2 Connect Request
+    public final static int FID_SABM = 2;  // Layer 2 Connect Request
+    public final static int FID_D = 3;  // Layer 2 Disconnect Request
+    public final static int FID_DISC = 4;  // Layer 2 Disconnect Request
+    public final static int FID_I = 5;  // Information frame
+    public final static int FID_RR = 6;  // Receive Ready. System Ready To Receive
+    public final static int FID_RNR = 7;  // Receive Not Ready. TNC Buffer Full
+    public final static int FID_NR = 8;  // Receive Not Ready. TNC Buffer Full
+    public final static int FID_RJ = 9;  // Reject Frame. Out of Sequence or Duplicate
+    public final static int FID_REJ = 10;  // Reject Frame. Out of Sequence or Duplicate
+    public final static int FID_FRMR = 11;  // Frame Reject. Fatal Error
+    public final static int FID_UI = 12;  // Unnumbered Information Frame. "Unproto"
+    public final static int FID_DM = 13;  // Disconnect Mode. System Busy or Disconnected.
 
-    public final static int IFRAME       = 0;
-    public final static int SFRAME       = 1;
-    public final static int UFRAME       = 2;
+    public final static int IFRAME = 0;
+    public final static int SFRAME = 1;
+    public final static int UFRAME = 2;
 
-    private static Addr getAddr(int arr[], int offset) {
-        int bytes[] = arr.slice(offset, offset+6).map(function(v) { return v >> 1; });
-        String call = String.fromCharCode.apply(null, bytes).trim();
-        int ssid = (arr[offset+6] >> 1) & 0xf;
-        return new PacketAddr(call, ssid);
-    }
-
-    public static Packet create(int data[]) {
-
-
-        int pos = 0;
-        Addr dest = getAddr(data, pos);
-        pos += 7;
-        Addr src  = getAddr(data, pos);
-        pos += 7;
-        Addr rpts[] = [];
-        //println("lastbyte:"+data(pos-1))
-        while (rpts.length < 8 && pos < data.length-7 && ((data[pos - 1] & 128) !== 0) ) {
-            rpts[rpts.length] = getAddr(data, pos);
-            pos += 7;
-        }
-
-        int ctrl = data[pos++];
-
-        int typ = ((ctrl & 1) === 0) ? IFRAME : ((ctrl & 2) === 0) ? SFRAME : UFRAME;
-
-        int pid = (typ == IFRAME) ? data[pos] : 0;
-        if (typ == IFRAME) pos++;
-
-        int info[] = data.slice(pos, data.length);
-
-        return new Packet(dest, src, rpts, 0, 0, info);
-    }
 
 
     private int state;
@@ -310,7 +318,7 @@ public class PacketMode extends FskBase {
 
         //shift right for the next bit, since ax.25 is lsb-first
         octet = (octet >> 1) & 0x7f;  //0xff? we dont want the msb
-        var bit = (inBit === lastBit); //google "nrzi"
+        boolean bit = (inBit == lastBit); //google "nrzi"
         lastBit = inBit;
         if (bit) 
             { ones += 1 ; octet |= 128; }
@@ -322,8 +330,8 @@ public class PacketMode extends FskBase {
             case RxStart :
                 //trace("RxStart");
                 //trace("st octet: %02x".format(octet));
-                if (octet === FLAG) {
-                    state    = RxTxd;
+                if (octet == FLAG) {
+                    state = RxTxd;
                     bitcount = 0;
                 }
                 break;
@@ -333,7 +341,7 @@ public class PacketMode extends FskBase {
                 if (++bitcount >= 8) {
                     //trace("txd octet: %02x".format(octet));
                     bitcount = 0;
-                    if (octet !== FLAG) {
+                    if (octet != FLAG) {
                         state    = RxData;
                         rxbuf[0] = octet & 0xff;
                         bufPtr   = 1;
@@ -343,7 +351,7 @@ public class PacketMode extends FskBase {
 
             case RxData :
                 //trace("RxData");
-                if (ones === 5) { // 111110nn, next bit will determine
+                if (ones == 5) { // 111110nn, next bit will determine
                     state = RxFlag1;
                 } else {
                     if (++bitcount >= 8) {
@@ -371,7 +379,7 @@ public class PacketMode extends FskBase {
             case RxFlag2 :
                 //we simply wanted that last bit
                 processPacket(rxbuf, bufPtr);
-                for (var rdx=0 ; rdx < RXLEN ; rdx++)
+                for (int rdx=0 ; rdx < RXLEN ; rdx++)
                     rxbuf[rdx] = 0;
                 state = RxStart;
                 break;
@@ -388,7 +396,7 @@ public class PacketMode extends FskBase {
         String str = "";
         for (int i=0 ; i<len ; i++) {
             int b = (ibytes[offset + i]); // >> 1;
-            str += String.fromCharCode(b);
+            str += (char) b;
         }
         return str;
     }        
@@ -404,12 +412,12 @@ public class PacketMode extends FskBase {
         for (int i=0 ; i < len ; i++) {
             crc.updateLE(data[i]);
         }
-        int v = crc.valueLE();
-        trace("crc: " + v.toString(16));
+        int v = crc.getValueLE();
+        trace("crc: " + Integer.toHexString(v));
         //theory is, if you calculate the CRC of the data, -including- the crc field,
         //a correct result will always be 0xf0b8
-        if (v === 0xf0b8) {
-            Packet p = Packets.create(data);
+        if (v == 0xf0b8) {
+            Packet p = Packet.create(data);
             par.puttext(p.toString() + "\n");
         }
         return true;
@@ -510,7 +518,7 @@ public class PacketMode extends FskBase {
 
 }
 
-export {Crc,PacketMode};
+
 
 
 
