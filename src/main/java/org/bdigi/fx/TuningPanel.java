@@ -27,6 +27,7 @@ package org.bdigi.fx;
 
 
 
+import javafx.animation.Timeline;
 import javafx.event.EventType;
 import javafx.scene.image.PixelWriter;
 import org.bdigi.core.Digi;
@@ -371,12 +372,9 @@ public class TuningPanel extends AnchorPane {
     private void start() {
         Duration oneFrameAmt = Duration.millis(70);
         KeyFrame oneFrame = new KeyFrame(oneFrameAmt, new Redrawer());
-
-		TimelineBuilder.create()
-		   .cycleCount(Animation.INDEFINITE)
-		   .keyFrames(oneFrame)
-		   .build()
-		   .play();
+		Timeline timeline = new Timeline(oneFrame);
+        timeline.setCycleCount(Animation.INDEFINITE);
+		timeline.play();
 	}
 
     public void update(int ps[]) {
