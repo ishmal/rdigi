@@ -20,9 +20,10 @@ public class Psk extends Mode {
 
     public Psk(Digi par) {
         super(par,
-            new Property.Mode("psk", "phase shift keying",
-            new Property.Boolean("qpsk", "qpsk mode", false)
-        ), 1000);
+            new Property("psk", "phase shift keying").
+                radio("rate", "bits/second", "31.25", "31.25", "62.5", "123").
+                bool("qpsk", "qpsk mode", false),
+            1000);
         setRate(31.25);
         generateTables();
     }
@@ -174,7 +175,7 @@ public class Psk extends Mode {
             int slen = s.length();
             boolean barr[] = new boolean[slen];
             for (int j=0 ; j<slen ; j++) {
-                barr[i] = (s.charAt(j) == '1');
+                barr[j] = (s.charAt(j) == '1');
             }
             int ival = Integer.parseInt(s, 2);
             decodeTable[ival] = i;
@@ -183,31 +184,19 @@ public class Psk extends Mode {
     }
 
 
-/*
-int props = {
-name : "psk",
-tooltip: "phase shift keying",
-controls : [
-{
-name: "rate",
-type: "choice",
-get value() { return self.getRate(); },
-set value(v) { self.setRate(parseFloat(v)); },
-values : [
-{ name :  "31", value :  31.25 },
-{ name :  "63", value :  62.50 },
-{ name : "125", value : 125.00 }
-]
-},
-{
-name: "qpsk",
-type: "boolean",
-get value() { return self.getQpskMode(); },
-set value(v) { self.setQpskMode(v); }
-}
-]
-};
-*/
+    public void booleanControl(String name, boolean value) {
+        if ("qpsk".equals(name)) {
+            setQpskMode(value);
+        }
+    }
+
+    public void radioControl(String name, String value) {
+        double d = Double.parseDouble(value);
+        if ("rate".equals(name)) {
+            setRate(d);
+        }
+    }
+
 
     public double getBandwidth() {
         return getRate();

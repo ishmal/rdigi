@@ -242,10 +242,10 @@ public class PacketMode extends FskBase {
 
     public PacketMode(Digi par) {
         super(par,
-            new Property.Mode("packet", "Packet mode",
-                new Property.Boolean("inv", "invert", false),
-                new Property.Boolean("uos", "unshift on space", false)
-            ), 4800);
+            new Property("packet", "Packet mode").
+                    bool("inv", "invert", false).
+                    bool("uos", "unshift on space", false),
+            4800);
         setShift(200.0);
         setRate(300.0);
         state = RxStart;

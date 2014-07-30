@@ -238,6 +238,7 @@ public class Audio {
     private static Map<String, Info> inputDevices;
     public static Map<String, Info> getInputDevices() {
         if (inputDevices == null) {
+            inputDevices = new HashMap<String, Info>();
             AudioFormat audioFormat = new AudioFormat(44100.0f, 16, 1, true, true);
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, audioFormat);
             inputDevices = new HashMap<String, Info>();
@@ -259,6 +260,7 @@ public class Audio {
     private static Map<String, Info> outputDevices;
     public static Map<String, Info> getOutputDevices() {
         if (outputDevices == null) {
+            outputDevices = new HashMap<String, Info>();
             AudioFormat audioFormat = new AudioFormat(44100.0f, 16, 1, true, true);
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
             inputDevices = new HashMap<String, Info>();

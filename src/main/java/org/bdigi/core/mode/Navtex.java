@@ -19,10 +19,9 @@ public class Navtex extends FskBase {
 
     public Navtex(Digi par) {
         super(par,
-            new Property.Mode("navtex", "Navtex mode",
-            new Property.Boolean("inv", "invert", false),
-            new Property.Boolean("uos", "unshift on space", false)
-            ),
+            new Property("navtex", "Navtex mode").
+                bool("inv", "invert", false).
+                bool("uos", "unshift on space", false),
           1000.0);
         setShift(170.0);
         setRate(100.0);
@@ -82,26 +81,12 @@ public class Navtex extends FskBase {
     private final static int REPEAT = 0x33;
 
 
-/*
-var props = {
-name : "navtex",
-tooltip: "international naval teleprinter",
-controls : [
-{
-name: "inv",
-type: "boolean",
-get value() { return self.getInverted(); },
-set value(v) { self.setInverted(v); }
-},
-{
-name: "UoS",
-type: "boolean",
-get value() { return self.getUnshiftOnSpace(); },
-set value(v) { self.setUnshiftOnSpace(v); }
-}
-]
-};
-*/
+    public void booleanControl(String name, boolean value) {
+        super.booleanControl(name, value);
+        if ("uos".equals(name)) {
+            setUos(value);
+        }
+    }
 
 
     public boolean getUos() {

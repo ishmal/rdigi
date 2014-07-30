@@ -8,36 +8,6 @@ import org.bdigi.core.Property;
  */
 public class Rtty extends FskBase{
 
-    private final static String props =
-           "{" +
-           "'name' : 'rtty'," +
-           "'tooltip' : 'radio teletype'" +
-           "'controls' : [" +
-           "   {" +
-           "   'type' : 'radio'," +
-           "   'name' : 'rate'," +
-           "   'value' : 45.45," +
-           "   'values' : [45.45,50,75,100]" +
-           "   }," +
-           "   {" +
-           "   'type' : 'radio'," +
-           "   'name' : 'shift'," +
-           "   'value' : 170," +
-           "   'values' : [85,170,200,450,850]" +
-           "   }," +
-           "   {" +
-           "   'type' : 'boolean'," +
-           "   'name' : 'inv'," +
-           "   'value' : false" +
-           "   }," +
-           "   {" +
-           "   'type' : 'boolean'," +
-           "   'name' : 'uos'," +
-           "   'value' : false" +
-           "   }" +
-           "]" +
-           "}";
-
     private boolean inv = false;
     private boolean uos = false;
     private int parityType;
@@ -56,10 +26,12 @@ public class Rtty extends FskBase{
 
     public Rtty(Digi par) {
         super(par,
-            new Property.Mode("rtty", "radio teletype",
-                new Property.Boolean("inv", "invert", false),
-                new Property.Boolean("uos", "unshift on space", false)
-            ), 1000);
+            new Property("rtty", "radio teletype").
+                radio("rate", "baud rate", "45.45", "45.45", "50", "75", "100", "110").
+                radio("shift", "mark/space split", "170", "85", "170", "200", "450", "850").
+                bool("inv", "invert", false).
+                bool("uos", "unshift on space", false),
+            1000);
         parityType = ParityNone;
         state     = RxIdle;
         bitcount  = 0;
@@ -122,6 +94,13 @@ public class Rtty extends FskBase{
     private final static int ParityZero = 2;
     private final static int ParityOdd  = 3;
     private final static int ParityEven = 4;
+
+    public void booleanControl(String name, boolean value) {
+        super.booleanControl(name, value);
+        if ("uos".equals(name)) {
+            setUos(value);
+        }
+    }
 
     public void setRate(double rate) {
         super.setRate(rate);

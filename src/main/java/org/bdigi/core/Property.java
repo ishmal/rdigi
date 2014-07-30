@@ -3,6 +3,10 @@
 package org.bdigi.core;
 
 
+import org.bdigi.core.mode.Mode;
+
+import java.util.ArrayList;
+
 public class Property {
 
     public static interface Control {
@@ -10,24 +14,36 @@ public class Property {
         String getTooltip();
     }
 
-    public static class Mode {
-        private String name;
-        private String tooltip;
-        private Control controls[];
+    private Mode mode;
+    private String name;
+    private String tooltip;
+    private ArrayList<Control> xs;
 
-        public Mode(String name, String tooltip, Control... controls) {
-            this.name = name;
-            this.tooltip = tooltip;
-            this.controls = controls;
-        }
-        public String getName() { return name; }
-        public String getTooltip() { return tooltip; }
-        public Control[] getControls() {
-            return controls;
-        }
+    public Property(String name, String tooltip) {
+        this.name = name;
+        this.tooltip = tooltip;
+        xs = new ArrayList<Control>();
+    }
+    public void setMode(Mode m) {
+        mode = m;
+    }
+    public String getName() { return name; }
+    public String getTooltip() { return tooltip; }
+    public Control[] getControls() {
+            return xs.toArray(new Control[0]);
+    }
+    public Property bool(String name, String tooltip, boolean value) {
+        xs.add(new Boolean(name, tooltip, value));
+        return this;
     }
 
-    public static class Boolean implements Control {
+    public Property radio(String name, String tooltip, String value, String... choices) {
+        xs.add(new Radio(name, tooltip, value, choices));
+        return this;
+    }
+
+
+    public class Boolean implements Control {
         private String name;
         private String tooltip;
         private boolean value;
@@ -45,15 +61,13 @@ public class Property {
         
         public void setValue(boolean v) {
             value = v;
-            changed(v);
+            mode.booleanControl(name, v);
         }
         
-        public void changed(boolean v) {
-        }
     }
 
 
-    public static class Radio implements Control {
+    public class Radio implements Control {
         private String name;
         private String tooltip;
         private String value;
@@ -75,11 +89,11 @@ public class Property {
         
         public void setValue(String v) {
             value = v;
-            changed(v);
+            mode.radioControl(name, v);
         }
         
-        public void changed(String v) {
-        }
     }
+
+
 
 }

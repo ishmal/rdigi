@@ -5,7 +5,7 @@
  *   Bob Jamison
  *
  * Copyright (C) 2014 Bob Jamison
- * 
+ *
  *  This file is part of the Scala SDR library.
  *
  *  This library is free software; you can redistribute it and/or
@@ -29,34 +29,24 @@ package org.bdigi.fx;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.HPos;
-import javafx.geometry.VPos;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.layout.*;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.paint.Color;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
-import javafx.scene.text.Text;
-
-
-
-import org.bdigi.core.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+import org.bdigi.core.Digi;
+import org.bdigi.core.Property;
 import org.bdigi.core.mode.Mode;
 
 import java.io.IOException;
@@ -67,16 +57,21 @@ class AboutDialog extends Stage {
         super();
         Parent root = (Parent) FXMLLoader.load(getClass().getResource("/about.fxml"));
         setTitle("About ScalaDigi");
-        setScene(new Scene(root));    }
+        setScene(new Scene(root));
+    }
 }
 
 class MainController extends Digi {
 
 
-    @FXML AnchorPane tuningPanelBox;
-    @FXML TabPane modePane;  
-    @FXML VBox consoleTextBox;
-    @FXML VBox inputTextBox;
+    @FXML
+    AnchorPane tuningPanelBox;
+    @FXML
+    TabPane modePane;
+    @FXML
+    VBox consoleTextBox;
+    @FXML
+    VBox inputTextBox;
     private TuningPanel tuningPanel;
     private Console consoleText;
     private InputText inputText;
@@ -85,54 +80,84 @@ class MainController extends Digi {
     private LogDialog logDialog;
 
     public MainController(Stage stage) {
-		tuningPanel = new TuningPanel(this);
-		consoleText = new Console(this);
-		inputText = new InputText(this, 20, 80);
-	
-		try {
+        tuningPanel = new TuningPanel(this);
+        consoleText = new Console(this);
+        inputText = new InputText(this, 20, 80);
+
+        try {
             aboutDialog = new AboutDialog();
         } catch (IOException e) {
 
         }
 
-		prefsDialog = new PrefsDialog(this);
-		logDialog = new LogDialog(this);
-		logDialog.puttext("Hello, world");
-	
-		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			public void handle(WindowEvent evt) {
-				doClose(evt);
-			}
-		});
-    
+        prefsDialog = new PrefsDialog(this);
+        logDialog = new LogDialog(this);
+        logDialog.puttext("Hello, world");
+
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            public void handle(WindowEvent evt) {
+                doClose(evt);
+            }
+        });
+
     }
-    
-    
-        
-        
-    
-    public void doClose      (Event evt){ /* stopProcessing(); */ Platform.exit(); }
-    public void doClear      (Event evt){ consoleText.clear(); inputText.clear(); }
-    public void doLog        (Event evt){logDialog.show();}
-    public void doAbout      (Event evt){aboutDialog.show();}
-    public void doPreferences(Event evt){prefsDialog.show();}
-    public void doRxTx       (Event evt){setTx(((ToggleButton) evt.getSource()).isSelected());}
-    public void doAgc        (Event evt){setAgc(((ToggleButton) evt.getSource()).isSelected());}
-    public void doAfc        (Event evt){setAfc(((ToggleButton) evt.getSource()).isSelected());}
-    
-    
-    
+
+
+    @FXML
+    public void doClose(Event evt) {
+        /* stopProcessing(); */
+        Platform.exit();
+    }
+
+    @FXML
+    public void doClear(Event evt) {
+        consoleText.clear();
+        inputText.clear();
+    }
+
+    @FXML
+    public void doLog(Event evt) {
+        logDialog.show();
+    }
+
+    @FXML
+    public void doAbout(Event evt) {
+        aboutDialog.show();
+    }
+
+    @FXML
+    public void doPreferences(Event evt) {
+        prefsDialog.show();
+    }
+
+    @FXML
+    public void doRxTx(Event evt) {
+        setTx(((ToggleButton) evt.getSource()).isSelected());
+    }
+
+    @FXML
+    public void doAgc(Event evt) {
+        setAgc(((ToggleButton) evt.getSource()).isSelected());
+    }
+
+    @FXML
+    public void doAfc(Event evt) {
+        setAfc(((ToggleButton) evt.getSource()).isSelected());
+    }
+
+
     /**
      * Called by the FXMLLoader as a place to do post-loading setup
      */
-    @FXML public void initialize() {
+    @FXML
+    public void initialize() {
         tuningPanelBox.getChildren().add(tuningPanel);
         tuningPanel.setManaged(true);
         consoleTextBox.getChildren().add(consoleText);
         inputTextBox.getChildren().add(inputText);
 
         for (final Mode mode : getModes()) {
-            Property.Mode props = mode.getProperties();
+            Property props = mode.getProperties();
             Tab tab = new Tab(props.getName());
             tab.setTooltip(new Tooltip(props.getTooltip()));
             modePane.getTabs().add(tab);
@@ -154,7 +179,7 @@ class MainController extends Digi {
             }
         }
     }
-        
+
     /**
      * Override these in your client code, especially for a GUI
      */
@@ -177,7 +202,7 @@ class MainController extends Digi {
         if (tuningPanel != null)
             tuningPanel.update(ps);
     }
-    
+
     public void updateScope(double buf[][]) {
         if (tuningPanel != null)
             tuningPanel.updateScope(buf);
@@ -188,7 +213,7 @@ class MainController extends Digi {
 
 
 public class MainGui extends Application {
-    
+
     public void start(Stage stage) {
         try {
             MainController controller = new MainController(stage);
@@ -204,6 +229,10 @@ public class MainGui extends Application {
             System.out.println("error:" + e);
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }
 

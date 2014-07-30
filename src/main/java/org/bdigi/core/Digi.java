@@ -30,8 +30,12 @@ public class Digi {
     private Config config;
 
     private double frequency;
+    private double sampleRate;
 
     public Digi() {
+
+        frequency = 1000.0;
+        sampleRate = 6300.0;
 
         pskMode = new Psk(this);
         rttyMode = new Rtty(this);
@@ -80,7 +84,7 @@ public class Digi {
     }
 
     public double getSampleRate() {
-        return 0;
+        return sampleRate;
     }
 
     public void setTx(boolean v) {

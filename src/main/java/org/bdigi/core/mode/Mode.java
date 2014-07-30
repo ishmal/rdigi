@@ -8,16 +8,17 @@ import org.bdigi.core.*;
 public class Mode {
 
     Digi par;
-    Property.Mode props;
+    Property props;
     int decimation;
     double sampleRate;
     Resampler.X decimator;
     Resampler.X interpolator;
     Nco nco;
 
-    public Mode(Digi par, Property.Mode props, double sampleRateHint) {
+    public Mode(Digi par, Property props, double sampleRateHint) {
         this.par = par;
         this.props = props;
+        props.setMode(this);
 
         adjustAfc();
 
@@ -32,7 +33,7 @@ public class Mode {
 
     }
 
-    public Property.Mode getProperties() {
+    public Property getProperties() {
         return props;
     }
 
@@ -42,6 +43,14 @@ public class Mode {
 
     protected void trace(String msg) {
         par.trace("mode: " + msg);
+    }
+
+    public void booleanControl(String name, boolean value) {
+
+    }
+
+    public void radioControl(String name, String value) {
+
     }
 
 

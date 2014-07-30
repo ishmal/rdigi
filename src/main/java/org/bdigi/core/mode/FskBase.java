@@ -12,12 +12,31 @@ import org.bdigi.core.filter.Window;
  */
 public class FskBase extends Mode {
 
-    public FskBase(Digi par, Property.Mode props, double sampleRateHint) {
+    private boolean inv;
+
+
+    public FskBase(Digi par, Property props, double sampleRateHint) {
         super(par, props, sampleRateHint);
+        inv = false;
     }
 
     private Filter mf;
     private Filter sf;
+
+    public void booleanControl(String name, boolean value) {
+        if ("inv".equals(name)) {
+            setInv(value);
+        }
+     }
+
+    public void radioControl(String name, String value) {
+        double d = Double.parseDouble(value);
+        if ("rate".equals(name)) {
+            setRate(d);
+        } else if ("shift".equals(name)) {
+            setShift(d);
+        }
+    }
 
     public void setRate(double v) {
         super.setRate(v);
@@ -29,6 +48,7 @@ public class FskBase extends Mode {
     public double getShift() {
         return shift;
     }
+
     public void setShift(double v) {
         shift = v;
     }
@@ -37,9 +57,16 @@ public class FskBase extends Mode {
         return shift;
     }
 
+    public boolean getInv() {
+        return inv;
+    }
+    public void setInv(boolean v) {
+        inv = v;
+    }
+
     private void adjust() {
-        mf = FIR.bandpass(13, -0.75*getRate(), -0.25*getRate(), getSampleRate(), Window.rectangle);
-        sf = FIR.bandpass(13,  0.25*getRate(),  0.75*getRate(), getSampleRate(), Window.rectangle);
+        mf = FIR.bandpass(13, -0.75 * getRate(), -0.25 * getRate(), getSampleRate(), Window.rectangle);
+        sf = FIR.bandpass(13, 0.25 * getRate(), 0.75 * getRate(), getSampleRate(), Window.rectangle);
     }
 
     public boolean isMiddleBit(boolean bit) {
