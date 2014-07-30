@@ -1,13 +1,20 @@
 
 package org.bdigi.fx;
 
+import javafx.scene.Scene;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import org.bdigi.core.Digi;
+
 public class LogDialog extends Stage {
 
-    public LogDialog(App par) {
+    private Digi par;
+    private Console console;
+    public LogDialog(Digi par) {
         this.par = par;
         setTitle("Log");
 		VBox vbox = new VBox();
-		Console console = new Console(par);
+		console = new Console(par);
 		vbox.getChildren().addAll(console);
 		Scene scene = new Scene(vbox);
 		setScene(scene);

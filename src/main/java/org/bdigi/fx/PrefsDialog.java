@@ -1,7 +1,24 @@
 package org.bdigi.fx;
 
 
-class PrefsDialog(par: App) extends Stage
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.Event;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.TextField;
+import javafx.stage.Stage;
+import org.bdigi.core.Config;
+import org.bdigi.core.Digi;
+import org.bdigi.core.audio.Audio;
+
+import java.util.List;
+import java.util.Map;
+
+class PrefsDialog  extends Stage
 {
 
     @FXML TextField callField;
@@ -9,14 +26,16 @@ class PrefsDialog(par: App) extends Stage
     @FXML TextField locatorField;
     @FXML ChoiceBox<String> inputDeviceList;
     @FXML ChoiceBox<String> outputDeviceList;
+
+    private Digi par;
     
-    public PrefsDialog(App par) {
+    public PrefsDialog(Digi par) {
         this.par = par;
 		try {
-			val loader = new FXMLLoader(getClass.getResource("/prefs.fxml"));
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("/prefs.fxml"));
 			loader.setController(this);
 			loader.load();
-			val scene = new Scene((Parent)loader.getRoot());
+			Scene scene = new Scene((Parent)loader.getRoot());
 			setTitle("Preferences");
 			setScene(scene);
 		} catch (Exception e) {
@@ -24,22 +43,23 @@ class PrefsDialog(par: App) extends Stage
 		}
     }
     
-    private  mapToFxList(Map<String, Audio.Info> xs) {
-        List list = FXCollections.observableArrayList[String]()
-        for (Map.Entry dev : xs) {
-            list.add(dev._1);
+    private ObservableList<String> mapToFxList(Map<String, Audio.Info> xs) {
+        ObservableList<String> list = FXCollections.observableArrayList();
+        for (Map.Entry<String, Audio.Info> dev : xs.entrySet()) {
+            list.add(dev.getKey());
         }
         return list;
     }
 
     @FXML public void initialize() {
-        callField.setText(par.config.call);
-        nameField.setText(par.config.name);
-        locatorField.setText(par.config.locator);
-        inputDeviceList.setItems(mapToFxList(AudioDevice.inputDevices));
-        inputDeviceList.setValue(par.config.audioInputDevice);
-        outputDeviceList.setItems(mapToFxList(AudioDevice.outputDevices));
-        outputDeviceList.setValue(par.config.audioOutputDevice);
+        Config c = par.getConfig();
+        callField.setText(par.getConfig().call);
+        nameField.setText(c.name);
+        locatorField.setText(c.locator);
+        inputDeviceList.setItems(mapToFxList(Audio.getInputDevices()));
+        inputDeviceList.setValue(c.audioInput);
+        outputDeviceList.setItems(mapToFxList(Audio.getOutputDevices()));
+        outputDeviceList.setValue(c.audioOutput);
         
         /*
         inputDeviceList.valueProperty.addListener(new ChangeListener[String]
@@ -54,21 +74,22 @@ class PrefsDialog(par: App) extends Stage
         */
     }
         
-    @FXML public void doOk(Event evt) = {
-        par.config.call    = callField.getText();
-        par.config.name    = nameField.getText();
-        par.config.locator = locatorField.getText();
-        Audio.Info inp     = inputDeviceList.getValue();
-        if (inp != par.config.audioInputDevice) {
-            par.setInputDevice(inp);
+    @FXML public void doOk(Event evt)  {
+        Config c = par.getConfig();
+        c.call    = callField.getText();
+        c.name    = nameField.getText();
+        c.locator = locatorField.getText();
+        String inp = inputDeviceList.getValue();
+        if (!c.audioInput.equals(inp)) {
+            par.setAudioInput(inp);
         }
-        par.config.audioInputDevice = inp;
-        Audio.Info outp = outputDeviceList.getValue();
-        if (outp != par.config.audioOutputDevice) {
-            par.setOutputDevice(outp) ;
+        c.audioInput = inp;
+        String outp = outputDeviceList.getValue();
+        if (!c.audioOutput.equals(outp)) {
+            par.setAudioOutput(outp);
         }
-        par.config.audioOutputDevice = outp;
-        par.configSave();
+        c.audioOutput = outp;
+        c.saveFile();
         close();
     }
 

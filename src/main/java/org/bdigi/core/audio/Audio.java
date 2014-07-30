@@ -277,7 +277,7 @@ public class Audio {
      * Create an audio input device by name.  If device is not in the list,
      * return an error
      */
-    public Input createInput(Digi par, String name) {
+    public static Input createInput(Digi par, String name) {
         Info dev = inputDevices.get(name);
         if (dev != null) {
             return new Input(par, dev);
@@ -290,7 +290,7 @@ public class Audio {
     /**
      * Create an audio output device by name .  If name does not exist, return an error
      */
-    public Output createOutput(Digi par, String name) {
+    public static Output createOutput(Digi par, String name) {
         Info dev = outputDevices.get(name);
         if (dev != null) {
             return new Output(par, dev);

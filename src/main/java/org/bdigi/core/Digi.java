@@ -2,6 +2,7 @@
 package org.bdigi.core;
 
 
+import org.bdigi.core.audio.Audio;
 import org.bdigi.core.audio.AudioInput;
 import org.bdigi.core.audio.AudioOutput;
 import org.bdigi.core.mode.Mode;
@@ -19,17 +20,23 @@ public class Digi {
     private Rtty rttyMode;
     private Psk pskMode;
     private Navtex navtexMode;
+    private Mode modes[];
     private Mode mode;
 
     private int decimation;
     private Resampler.D decimator;
     private Resampler.D interpolator;
 
+    private Config config;
+
+    private double frequency;
+
     public Digi() {
 
         pskMode = new Psk(this);
         rttyMode = new Rtty(this);
         navtexMode = new Navtex(this);
+        modes = new Mode[]{pskMode,rttyMode,navtexMode};
         mode = pskMode;
 
         fft = new FFT(Constants.FFT_SIZE);
@@ -37,7 +44,7 @@ public class Digi {
         decimator = Resampler.create(decimation);
         interpolator = Resampler.create(decimation);
 
-
+        config = new Config(this);
     }
 
     public void error(String msg) {
@@ -48,11 +55,45 @@ public class Digi {
         System.out.println("digi: " + msg);
     }
 
+    public Config getConfig() {
+        return config;
+    }
+
+    public Mode[] getModes() {
+        return modes;
+    }
+
+    public void setMode(Mode m) {
+        mode = m;
+    }
+
+    public double getFrequency() {
+        return frequency;
+    }
+    public void setFrequency(double v) {
+        frequency = v;
+        mode.setFrequency(v);
+    }
+
+    public double getBandwidth() {
+        return mode.getBandwidth();
+    }
 
     public double getSampleRate() {
         return 0;
     }
 
+    public void setTx(boolean v) {
+        //do stuff
+    }
+
+    public void setAfc(boolean v) {
+        //do stuff
+    }
+
+    public void setAgc(boolean v) {
+
+    }
 
 
     public void receiveData(double v) {
@@ -72,18 +113,11 @@ public class Digi {
 
     }
 
+    public void setAudioInput(String name) {
+        audioInput = Audio.createInput(this, name);
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    public void setAudioOutput(String name) {
+        audioOutput = Audio.createOutput(this, name);
+    }
 }

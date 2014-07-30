@@ -1,24 +1,34 @@
 
 package org.bdigi.fx;
 
-public class Console(par: App) extends TextArea {
+import javafx.application.Platform;
+import javafx.event.EventHandler;
+import javafx.scene.control.TextArea;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import org.bdigi.core.Digi;
 
-    private App par;
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class Console extends TextArea {
+
+    private Digi par;
     private boolean autoAdjust;
-    private Queue queue;
+    private Queue<String> queue;
     private boolean busy;
     private Refresher refresher;
 
-    public Console(App par) {
+    public Console(Digi par) {
         this.par = par;
-        setEditable(false)
+        setEditable(false);
         autoAdjust = true;
-        queue = new Queue();
+        queue = new LinkedList<String>();
         busy = false;
         refresher = new Refresher();
 		addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent evt) {
-				if (evt.getCode == KeyCode.SPACE)
+				if (evt.getCode() == KeyCode.SPACE)
 					autoAdjust = !autoAdjust;
 			}
 		});
@@ -28,13 +38,13 @@ public class Console(par: App) extends TextArea {
 
         public void run() {
             try {
-                while (!queue.isEmpty) {
-                    appendText(queue.dequeue);
+                while (!queue.isEmpty()) {
+                    appendText(queue.remove());
                     if (autoAdjust)
-                        positionCaret(getText.length);
+                        positionCaret(getText().length());
                 }
-            } catch (Exception e {
-                par.error("Console 2: ", e);
+            } catch (Exception e) {
+                par.error("Console: " + e);
                   e.printStackTrace();
             }
         }

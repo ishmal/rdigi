@@ -2,11 +2,17 @@
 package org.bdigi.fx;
 
 
+import javafx.scene.control.TextArea;
+import org.bdigi.core.Digi;
+
 public class InputText extends TextArea {
 
     private int lastPos;
+    private Digi par;
 
-    public InputText(App par, int rows, int cols) {
+    public InputText(Digi par, int rows, int cols) {
+        super();
+        this.par = par;
 		setPrefRowCount(rows);
 		setPrefColumnCount(cols);
 		setEditable(true);
@@ -20,7 +26,6 @@ public class InputText extends TextArea {
     }
     
     public String gettext() {
-        {
         String text = getText();
         int len = text.length();
         String res = (lastPos < len) ? text.substring(lastPos) : "";

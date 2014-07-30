@@ -3,6 +3,7 @@ package org.bdigi.core.mode;
 import org.bdigi.core.Complex;
 import org.bdigi.core.Convolutional;
 import org.bdigi.core.Digi;
+import org.bdigi.core.Property;
 import org.bdigi.core.filter.Biquad;
 import org.bdigi.core.filter.Filter;
 
@@ -18,7 +19,10 @@ public class Psk extends Mode {
     Convolutional.Decoder decoder;
 
     public Psk(Digi par) {
-        super(par, "", 1000.0);
+        super(par,
+            new Property.Mode("psk", "phase shift keying",
+            new Property.Boolean("qpsk", "qpsk mode", false)
+        ), 1000);
         setRate(31.25);
         generateTables();
     }

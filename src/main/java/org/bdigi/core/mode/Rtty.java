@@ -1,6 +1,7 @@
 package org.bdigi.core.mode;
 
 import org.bdigi.core.Digi;
+import org.bdigi.core.Property;
 
 /**
  * Created by Bob on 7/24/2014.
@@ -54,7 +55,11 @@ public class Rtty extends FskBase{
     private final static int msbit     = 1<<(NRBITS-1);
 
     public Rtty(Digi par) {
-        super(par, props, 1000);
+        super(par,
+            new Property.Mode("rtty", "radio teletype",
+                new Property.Boolean("inv", "invert", false),
+                new Property.Boolean("uos", "unshift on space", false)
+            ), 1000);
         parityType = ParityNone;
         state     = RxIdle;
         bitcount  = 0;

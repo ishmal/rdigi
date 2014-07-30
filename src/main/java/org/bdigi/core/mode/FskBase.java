@@ -2,6 +2,7 @@ package org.bdigi.core.mode;
 
 import org.bdigi.core.Complex;
 import org.bdigi.core.Digi;
+import org.bdigi.core.Property;
 import org.bdigi.core.filter.FIR;
 import org.bdigi.core.filter.Filter;
 import org.bdigi.core.filter.Window;
@@ -11,7 +12,7 @@ import org.bdigi.core.filter.Window;
  */
 public class FskBase extends Mode {
 
-    public FskBase(Digi par, String props, double sampleRateHint) {
+    public FskBase(Digi par, Property.Mode props, double sampleRateHint) {
         super(par, props, sampleRateHint);
     }
 

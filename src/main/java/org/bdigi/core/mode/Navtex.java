@@ -1,6 +1,7 @@
 package org.bdigi.core.mode;
 
 import org.bdigi.core.Digi;
+import org.bdigi.core.Property;
 
 /**
  *
@@ -17,7 +18,12 @@ public class Navtex extends FskBase {
     private char table[][];
 
     public Navtex(Digi par) {
-        super(par, "", 1000.0);
+        super(par,
+            new Property.Mode("navtex", "Navtex mode",
+            new Property.Boolean("inv", "invert", false),
+            new Property.Boolean("uos", "unshift on space", false)
+            ),
+          1000.0);
         setShift(170.0);
         setRate(100.0);
         uos = false;

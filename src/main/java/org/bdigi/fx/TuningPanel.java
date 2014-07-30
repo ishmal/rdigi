@@ -23,23 +23,41 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bdigi.fx
+package org.bdigi.fx;
 
 
 
-import org.bdigi.{App, Complex, Constants, DFft, MathUtil, Window}
+import javafx.event.EventType;
+import javafx.scene.image.PixelWriter;
+import org.bdigi.core.Digi;
+import org.bdigi.core.Constants;
 
-import javafx.application.Platform
-import javafx.animation.{Animation, KeyFrame, TimelineBuilder}
-import javafx.util.Duration
-import javafx.beans.value.{ChangeListener,ObservableValue}
-import javafx.scene.layout.{AnchorPane, BorderPane, HBox,VBox,Pane}
-import javafx.scene.canvas.{Canvas, GraphicsContext}
-import javafx.scene.image.{ImageView,WritableImage,PixelFormat}
-import javafx.scene.shape.{Rectangle}
-import javafx.scene.paint.Color
-import javafx.event.{ActionEvent, Event, EventHandler}
-import javafx.scene.input.{KeyEvent,MouseEvent,ScrollEvent}
+
+import javafx.application.Platform;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.TimelineBuilder;
+import javafx.util.Duration;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.paint.Color;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 
 //########################################################################
 //#    Tuning Panel.    A single canvas with three widgets
@@ -55,62 +73,67 @@ public class TuningPanel extends AnchorPane {
 	final static int initialHeight = 100;
 	final static int TUNER_HEIGHT = 24;
 	private Canvas canvas;
-	private Context ctx;
-	private WaterfallArea waterfallArea;
-	private TunerArea tunerArea;
-	private ScopeArea scopeArea;
+	private GraphicsContext ctx;
+	private Waterfall waterfall;
+	private TunerArea tuner;
+	private ScopeArea scope;
     
     public TuningPanel(Digi par) {
         this.par = par;
-		AnchorPane.setLeftAnchor(this, 0);
-		AnchorPane.setTopAnchor(this, 0);
-		AnchorPane.setRightAnchor(this, 0);
-		AnchorPane.setBottomAnchor(this, 0);
+		AnchorPane.setLeftAnchor(this, 0.);
+		AnchorPane.setTopAnchor(this, 0.);
+		AnchorPane.setRightAnchor(this, 0.);
+		AnchorPane.setBottomAnchor(this, 0.);
         canvas = new Canvas(initialWidth, initialHeight);
-		AnchorPane.setLeftAnchor(canvas, 0);
-		AnchorPane.setTopAnchor(canvas, 0);
-		AnchorPane.setRightAnchor(canvas, 0);
-		AnchorPane.setBottomAnchor(canvas, 0);
-		getChildren.add(canvas);
+		AnchorPane.setLeftAnchor(canvas, 0.);
+		AnchorPane.setTopAnchor(canvas, 0.);
+		AnchorPane.setRightAnchor(canvas, 0.);
+		AnchorPane.setBottomAnchor(canvas, 0.);
+		getChildren().add(canvas);
 		ctx = canvas.getGraphicsContext2D();
 
-		waterfall = new WaterfallArea(initialWidth, initialHeight - TUNER_HEIGHT);
+		waterfall = new Waterfall(initialWidth, initialHeight - TUNER_HEIGHT);
 		tuner = new TunerArea(initialWidth, TUNER_HEIGHT);
 		scope = new ScopeArea(initialHeight - TUNER_HEIGHT, initialHeight - TUNER_HEIGHT);
-		ChangeListener resizeListener = new ChangeListener<Number>() {
+		ChangeListener listener = new ChangeListener<Number>() {
 
-			public void changed(observableValue: ObservableValue[_ <: Number], oldval: Number, newval: Number){
-				int w = (getWidth != 0) ? getWidth.toInt : 50;
-				int h = (getHeight != 0) ? getHeight.toInt : 50;
+			public void changed(ObservableValue<? extends Number>value,
+                                Number oldval, Number newval){
+				int w = (getWidth() != 0) ? (int)getWidth() : 50;
+				int h = (getHeight() != 0) ? (int)getHeight() : 50;
 				trace("w: " + w + "  h:" + h);
 				canvas.setWidth(w);
 				canvas.setHeight(h);
-				waterfall = new WaterfallArea(w, h - TUNER_HEIGHT);
+				waterfall = new Waterfall(w, h - TUNER_HEIGHT);
 				tuner     = new TunerArea(w, TUNER_HEIGHT);
 				scope     = new ScopeArea(h - TUNER_HEIGHT, h - TUNER_HEIGHT);
 				}
 		};
 	
-		widthProperty.addListener(resizeListener);
-		heightProperty.addListener(resizeListener);
+		widthProperty().addListener(listener);
+		heightProperty().addListener(listener);
     }
 
 
 
     class Waterfall {
-    
-        private Image img;
+
+        private int width;
+        private int height;
+        private WritableImage img;
         private int nrPix;
-        private int pixels;
+        private int pixels[];
         private int lastRow;
         private PixelWriter writer;
+        private PixelFormat format;
         private int colors[];
         private int pslen;
-        private int psIndices;
+        private int psIndices[];
         private int psbuf[];
     
-        public WaterfallArea(int width, int height) {
-        
+        public Waterfall(int width, int height) {
+            this.width = width;
+            this.height = height;
             img     = new WritableImage(width, height);
             nrPix   = width * height;
             pixels  = new int[nrPix];
@@ -126,10 +149,10 @@ public class TuningPanel extends AnchorPane {
         private void genColors() {
             colors = new int[256];
             for (int i=0 ; i<256 ; i++) {
-				val r = (i < 170) ? 0 : (i-170) * 3;
-				val g = (i <  85) ? 0 : (i < 170) ? (i-85) * 3 : 255;
-				val b = (i <  85) ? i * 3 : 255;
-				var col = 0xff;
+				int r = (i < 170) ? 0 : (i-170) * 3;
+				int g = (i <  85) ? 0 : (i < 170) ? (i-85) * 3 : 255;
+				int b = (i <  85) ? i * 3 : 255;
+				int col = 0xff;
 				col = (col << 8) + r;
 				col = (col << 8) + g;
 				col = (col << 8) + b;
@@ -160,7 +183,7 @@ public class TuningPanel extends AnchorPane {
             ctx.drawImage(img, 0.0, 0.0, width, height);
             }
 
-        def update(int ps[]) {
+        public void update(int ps[]) {
             psbuf = ps.clone();
         }
                 
@@ -179,21 +202,19 @@ public class TuningPanel extends AnchorPane {
             range = maxFreq - minFreq;
 			addEventHandler(MouseEvent.ANY, new EventHandler<MouseEvent>() {
 				public void handle(MouseEvent evt) {
-					switch (evt.getEventType()) {
-						case MouseEvent.MOUSE_CLICKED :
-						     setFrequency(x2freq(evt.getX));
-						     break;
-						case MouseEvent.MOUSE_DRAGGED :
-						    setFrequencu(x2freq(evt.getX));
-						    break;
-						default:
-						}
-					}
+                    EventType typ = evt.getEventType();
+                    if (typ == MouseEvent.MOUSE_CLICKED) {
+                        setFrequency(x2freq(evt.getX()));
+                    } else if (typ == MouseEvent.MOUSE_DRAGGED) {
+                        setFrequency(x2freq(evt.getX()));
+                    }
+                }
 			});
 			
 			setOnScroll(new EventHandler<ScrollEvent>() {
 				public void handle(ScrollEvent evt) {
-					setFrequency((evt.getDeltaY > 0) ? freq + 1 : freq - 1);
+					setFrequency((evt.getDeltaY() > 0) ?
+                        getFrequency() + 1 :  getFrequency() - 1);
 					redraw();
 				}
 			});
@@ -208,7 +229,7 @@ public class TuningPanel extends AnchorPane {
             par.setFrequency(v);
         }
 
-        function getBandwidth() {
+        double getBandwidth() {
             return par.getBandwidth();
         }
             
@@ -216,7 +237,7 @@ public class TuningPanel extends AnchorPane {
             int top = (int)(getHeight() - height);
             
             ctx.setFill(Color.BLACK);
-            ctx.fillRect(0, top, width.toInt, height.toInt);
+            ctx.fillRect(0, top, width, height);
             
             //draw the tickmarks
             double hzWidth   = width / range;
@@ -237,21 +258,21 @@ public class TuningPanel extends AnchorPane {
                     ctx.setFill(Color.GREEN);
                     ctx.fillRect(hx, top, 2.0, 5.0);
                 } else {
-                    ctx.setFill(Color.GREEN)
-                    ctx.fillRect(hx, top, 2.0, 2.0)
+                    ctx.setFill(Color.GREEN);
+                    ctx.fillRect(hx, top, 2.0, 2.0);
                 }
             }
     
             
             ctx.setFill(Color.GREEN);
-            double fx = width * freq / range;
-            ctx.fillRect(fx, 3, 1.0, getHeight-10);
+            double fx = width * getFrequency() / range;
+            ctx.fillRect(fx, 3, 1.0, getHeight()-10);
             
             if (getBandwidth() > 0.0) {
                 ctx.setFill(Color.RED);
-                double lox = width * (freq - bw * 0.5) / range;
+                double lox = width * ( getFrequency() - getBandwidth() * 0.5) / range;
                 ctx.fillRect(lox, top+5, 1.0, 10);
-                double hix = width * (freq + bw * 0.5) / range;
+                double hix = width * ( getFrequency() + getBandwidth() * 0.5) / range;
                 ctx.fillRect(hix, top+5, 1.0, 10);
             }
         }
@@ -268,19 +289,16 @@ public class TuningPanel extends AnchorPane {
 
     class ScopeArea extends Canvas {
 
-		private int BUFSIZE = 512
 		private double buf[][];
-		private int bufptr;
 		private double lastx;
 		private double lasty;
 		private double vscale;
 		private int timeScale;
-		Context ctx;
+		GraphicsContext ctx;
 
         public ScopeArea(int width, int height) {
             super(width, height);
             buf = new double[0][2];
-            butptr = 0;
             lastx = 0.0;
             lasty = 0.0;
             vscale = 10.0;
@@ -291,13 +309,12 @@ public class TuningPanel extends AnchorPane {
         
         //only call from javafx thread
         public void redraw() {
-            int w   = width;
-            double w2  = w * 0.5;
-            int h   = height
+            int w  = (int) getWidth();
+            double w2 = w * 0.5;
+            int h = (int) getHeight();
             double h2  = h * 0.5;
-            double x0  = w2
-            double y0  = h2
-            int ptr = bufptr;
+            double x0  = w2;
+            double y0  = h2;
             double x   = 0.0;
             double y   = 0.0;
 
@@ -310,11 +327,11 @@ public class TuningPanel extends AnchorPane {
 
             //the trace line
             ctx.setStroke(Color.YELLOW);
-            for (int i=0 ; i<BUFSIZE ; i+=timeScale) {
-                double v[] = buf[ptr];
-                val vx = v[0];
-                val vy = v[1];
-                ptr = (ptr + 1) % BUFSIZE;
+            int len = buf.length;
+            for (int i=0 ; i<len ; i+=timeScale) {
+                double v[] = buf[i];
+                double vx = v[0];
+                double vy = v[1];
                 x = x0 + vx * vscale;
                 y = y0 + vy * vscale;
                 ctx.strokeLine(lastx, lasty, x, y);
@@ -323,13 +340,12 @@ public class TuningPanel extends AnchorPane {
                 }
             ctx.setFill(Color.RED);
             ctx.fillRect(x-2.0, y-2.0, 4.0, 4.0);
-            }    
+            }
 
  
-         public void update(double x, double y) {
-            buf(bufPtr) = (x, y)
-            bufPtr = (bufPtr + 1) % BUFSIZE;
-            }
+        public void update(double points[][]) {
+            buf = points;
+        }
             
                   
     } //scope
@@ -344,7 +360,7 @@ public class TuningPanel extends AnchorPane {
     
 
 
-    class Redrawer extends EventHandler<ActionEvent> {
+    class Redrawer implements EventHandler<ActionEvent> {
         public void handle(javafx.event.ActionEvent event) {
             waterfall.redraw();
             tuner.redraw();
@@ -353,8 +369,8 @@ public class TuningPanel extends AnchorPane {
     }
         
     private void start() {
-        val oneFrameAmt = Duration.millis(70);
-        var oneFrame = new KeyFrame(oneFrameAmt, new Redrawer)
+        Duration oneFrameAmt = Duration.millis(70);
+        KeyFrame oneFrame = new KeyFrame(oneFrameAmt, new Redrawer());
 
 		TimelineBuilder.create()
 		   .cycleCount(Animation.INDEFINITE)

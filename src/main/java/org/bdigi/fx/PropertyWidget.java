@@ -5,7 +5,7 @@
  *   Bob Jamison
  *
  * Copyright (C) 2014 Bob Jamison
- * 
+ *
  *  This file is part of the Scala SDR library.
  *
  *  This library is free software; you can redistribute it and/or
@@ -24,66 +24,65 @@
  */
 
 
-package org.bdigi.fx
+package org.bdigi.fx;
 
 
-import javafx.scene.control.*;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
-import org.bdigi.core.BooleanProperty
-import org.bdigi.core.RadioProperty;
+import org.bdigi.core.Property;
 
 
 public class PropertyWidget {
 
-    public static class Boolean extends ToggleButton 
-        implements EventHandler<ActionEvent> {
-    
+    public static class Boolean extends ToggleButton
+    implements EventHandler<ActionEvent> {
+
+        private Property.Boolean p;
+
         public Boolean(Property.Boolean p) {
-            super(p.getLabel());
-            setSelected(p.getValue())
+            super(p.getName());
+            this.p = p;
+            setSelected(p.getValue());
             if (p.getTooltip().length() > 0)
-                setTooltip(new Tooltip(p.getTooltip()))
+                setTooltip(new Tooltip(p.getTooltip()));
             setOnAction(this);
         }
-        
-		public void handle(ActionEvent evt) {
-			p.setValue(isSelected());
-		}
+
+        public void handle(ActionEvent evt) {
+            p.setValue(isSelected());
+        }
 
     }
 
     public static class Radio extends VBox {
-        
-        public Radio(Property.Radio p) {
 
+        public Radio(final Property.Radio p) {
             getStyleClass().add("radiogroup");
             HBox hbox = new HBox();
-            getChildren().addAll(new Label(p.getLabel()), hbox);
+            getChildren().addAll(new Label(p.getName()), hbox);
             ToggleGroup group = new ToggleGroup();
-            
-        
-            for (int idx=0 ; i<p.getItems().length ; i++) {
-                RadioButton btn = new RadioButton(p.items[idx]);
+
+            String choices[] = p.getChoices();
+            int len = choices.length;
+
+            for (int i = 0; i < len; i++) {
+                final String choice = choices[i];
+                RadioButton btn = new RadioButton(choice);
                 btn.setToggleGroup(group);
-                hbox.getChildren.add(btn);
-                if (idx == p.value)
+                hbox.getChildren().add(btn);
+                if (p.getValue().equals(choice))
                     btn.setSelected(true);
-                if (p.tooltip.size > 0)
+                if (p.getTooltip().length() > 0)
                     btn.setTooltip(new Tooltip(p.getTooltip()));
                 btn.setOnAction(new EventHandler<ActionEvent>() {
-                     int index = idx;
-                     
-                     override def handle(evt: ActionEvent)
-                         {
-                         p.value = index
-                         }
-                     })
-                }
+                    public void handle(ActionEvent evt) {
+                        p.setValue(choice);
+                    }
+                });
+            }
+        }
+    }
 }

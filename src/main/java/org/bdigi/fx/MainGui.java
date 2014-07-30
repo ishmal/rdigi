@@ -24,67 +24,79 @@
  */
 
 
-package org.bdigi.fx
+package org.bdigi.fx;
 
 
-import javafx.application.{Application, Platform}
-import javafx.beans.value.{ChangeListener,ObservableValue}
-import javafx.geometry.{HPos,VPos}
-import javafx.stage.{Stage,WindowEvent}
-import javafx.collections.{FXCollections,ObservableList}
-import javafx.fxml.{FXML,FXMLLoader}
-import javafx.scene.{Node=>jfxNode, Parent, Scene}
-import javafx.scene.control.{Button,CheckBox,ChoiceBox,Tab,TabPane,TextArea,TextField,ToggleButton,Tooltip}
-import javafx.event.{ActionEvent,Event,EventHandler}
-import javafx.scene.layout.{AnchorPane,FlowPane,HBox,VBox,VBoxBuilder,Pane}
-import javafx.scene.input.{KeyEvent,KeyCode}
-import javafx.scene.paint.Color
-import javafx.scene.image.Image
-import javafx.scene.text.Text
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.geometry.HPos;
+import javafx.geometry.VPos;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.scene.layout.*;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
+import javafx.scene.text.Text;
 
 
 
 import org.bdigi.core.*;
+import org.bdigi.core.mode.Mode;
 
+import java.io.IOException;
 
+class AboutDialog extends Stage {
 
+    public AboutDialog() throws IOException {
+        super();
+        Parent root = (Parent) FXMLLoader.load(getClass().getResource("/about.fxml"));
+        setTitle("About ScalaDigi");
+        setScene(new Scene(root));    }
+}
 
-
-
-
-
-
-
-
-
-
-public class MainController extends Digi {
+class MainController extends Digi {
 
 
     @FXML AnchorPane tuningPanelBox;
     @FXML TabPane modePane;  
     @FXML VBox consoleTextBox;
     @FXML VBox inputTextBox;
-    TuningPanel tuningPanel;
-    Console consoleText;
-    InputText inputText;
-    Stage aboutDialog;
-    PrefsDialog prefsDialog;
-    LogDialog logDialog;
+    private TuningPanel tuningPanel;
+    private Console consoleText;
+    private InputText inputText;
+    private Stage aboutDialog;
+    private PrefsDialog prefsDialog;
+    private LogDialog logDialog;
 
     public MainController(Stage stage) {
 		tuningPanel = new TuningPanel(this);
 		consoleText = new Console(this);
 		inputText = new InputText(this, 20, 80);
 	
-		aboutDialog = new Stage() {
-			Parent root = (Parent) FXMLLoader.load(getClass.getResource("/about.fxml"));
-			setTitle("About ScalaDigi");
-			setScene(new Scene(root));
-		}
-		
+		try {
+            aboutDialog = new AboutDialog();
+        } catch (IOException e) {
+
+        }
+
 		prefsDialog = new PrefsDialog(this);
-		val logDialog = new LogDialog(this);
+		logDialog = new LogDialog(this);
 		logDialog.puttext("Hello, world");
 	
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -99,12 +111,12 @@ public class MainController extends Digi {
         
         
     
-    public void doClose      (Event evt){ stopProcessing(); Platform.exit(); }
+    public void doClose      (Event evt){ /* stopProcessing(); */ Platform.exit(); }
     public void doClear      (Event evt){ consoleText.clear(); inputText.clear(); }
     public void doLog        (Event evt){logDialog.show();}
     public void doAbout      (Event evt){aboutDialog.show();}
     public void doPreferences(Event evt){prefsDialog.show();}
-    public void doRxTx       (Event evt){rxtx = ((ToggleButton) evt.getSource()).isSelected();}
+    public void doRxTx       (Event evt){setTx(((ToggleButton) evt.getSource()).isSelected());}
     public void doAgc        (Event evt){setAgc(((ToggleButton) evt.getSource()).isSelected());}
     public void doAfc        (Event evt){setAfc(((ToggleButton) evt.getSource()).isSelected());}
     
@@ -117,34 +129,31 @@ public class MainController extends Digi {
         tuningPanelBox.getChildren().add(tuningPanel);
         tuningPanel.setManaged(true);
         consoleTextBox.getChildren().add(consoleText);
-        inputTextBox.getChildren().add(inputText); 
-        
-        for (Mode mode : modes) {
-            Tab tab = new Tab(mode.name);
-            tab.setTooltip(new Tooltip(mode.tooltip));
+        inputTextBox.getChildren().add(inputText);
+
+        for (final Mode mode : getModes()) {
+            Property.Mode props = mode.getProperties();
+            Tab tab = new Tab(props.getName());
+            tab.setTooltip(new Tooltip(props.getTooltip()));
             modePane.getTabs().add(tab);
             FlowPane pane = new FlowPane();
             tab.setContent(pane);
             tab.setOnSelectionChanged(new EventHandler<Event>() {
-                public void handle(Event evt) {
-                    self.mode = mode; //set parent to this mode
+                @Override
+                public void handle(Event event) {
+                    setMode(mode);
                 }
-            })
-            
-            for (Properties prop : mode.properties.properties) {
-                switch (prop) {
-                     case p : BooleanProperty :
-                         pane.getChildren.add(new BooleanPropertyWidget(p));
-                         break;
-                     case p : RadioProperty :
-                         pane.getChildren.add(new RadioPropertyWidget(p));
-                         break;
-                     default:
-                     }
+            });
+
+            for (Property.Control control : props.getControls()) {
+                if (control instanceof Property.Boolean) {
+                    pane.getChildren().add(new PropertyWidget.Boolean((Property.Boolean) control));
+                } else if (control instanceof Property.Radio) {
+                    pane.getChildren().add(new PropertyWidget.Radio((Property.Radio) control));
                 }
-            } 
+            }
         }
-        
+    }
         
     /**
      * Override these in your client code, especially for a GUI
@@ -169,53 +178,34 @@ public class MainController extends Digi {
             tuningPanel.update(ps);
     }
     
-    public void updateScope(double x, double y) {
+    public void updateScope(double buf[][]) {
         if (tuningPanel != null)
-            tuningPanel.updateScope(x, y);
+            tuningPanel.updateScope(buf);
     }
 
-    startProcessing();    
+    //startProcessing();
 }
 
 
-class Main extends Application
-{
+public class MainGui extends Application {
     
-    override def start(stage: Stage) =
-        {
-        try
-            {
-            val controller = new MainController(stage)
-            val loader = new FXMLLoader(getClass.getResource("/main.fxml"))
-            loader.setController(controller)
-            val page = loader.load.asInstanceOf[Parent]
-            val scene = new Scene(page)
-            stage.setTitle("bdigi")
-            stage.getIcons.add(new Image(getClass.getResourceAsStream("/icon.png")));
-            stage.setScene(scene)
-            stage.show
-            }
-        catch
-            {
-            case e: java.io.IOException => println("error:" + e)
-                                e.printStackTrace
-            }
-        }     
-}
-
-
-object Main
-{
-    def main(argv: Array[String]) : Unit =
-        {
-        javafx.application.Application.launch(classOf[Main], argv:_*)
+    public void start(Stage stage) {
+        try {
+            MainController controller = new MainController(stage);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/main.fxml"));
+            loader.setController(controller);
+            Parent page = (Parent) loader.load();
+            Scene scene = new Scene(page);
+            stage.setTitle("bdigi");
+            stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
+            stage.setScene(scene);
+            stage.show();
+        } catch (Exception e) {
+            System.out.println("error:" + e);
+            e.printStackTrace();
         }
+    }
 }
-
-
-
-
-
 
 
 

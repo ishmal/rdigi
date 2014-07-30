@@ -27,6 +27,7 @@ package org.bdigi.core.mode;
 
 import org.bdigi.core.Crc;
 import org.bdigi.core.Digi;
+import org.bdigi.core.Property;
 import org.bdigi.core.mode.Mode;
 
 import java.util.Arrays;
@@ -240,7 +241,11 @@ public class PacketMode extends FskBase {
 
 
     public PacketMode(Digi par) {
-        super(par, "", 4800);
+        super(par,
+            new Property.Mode("packet", "Packet mode",
+                new Property.Boolean("inv", "invert", false),
+                new Property.Boolean("uos", "unshift on space", false)
+            ), 4800);
         setShift(200.0);
         setRate(300.0);
         state = RxStart;
