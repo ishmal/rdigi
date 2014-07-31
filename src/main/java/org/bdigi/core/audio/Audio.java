@@ -233,16 +233,17 @@ public class Audio {
     }
 
 
+    private static Map<String, Info> inputDevices;
+
+
     /**
      * List conforming audio input devices
      */
-    private static Map<String, Info> inputDevices;
     public static Map<String, Info> getInputDevices() {
         if (inputDevices == null) {
             inputDevices = new HashMap<String, Info>();
             AudioFormat audioFormat = new AudioFormat(44100.0f, 16, 1, true, true);
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, audioFormat);
-            inputDevices = new HashMap<String, Info>();
             for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
                 Mixer m = AudioSystem.getMixer(mixerInfo);
                 if (m.isLineSupported(info)) {
@@ -254,17 +255,21 @@ public class Audio {
     }
 
 
-     
+
+
+
+
+    private static Map<String, Info> outputDevices;
+
+
     /**
      * List conforming audio output devices
      */
-    private static Map<String, Info> outputDevices;
     public static Map<String, Info> getOutputDevices() {
         if (outputDevices == null) {
             outputDevices = new HashMap<String, Info>();
             AudioFormat audioFormat = new AudioFormat(44100.0f, 16, 1, true, true);
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-            inputDevices = new HashMap<String, Info>();
             for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
                 Mixer m = AudioSystem.getMixer(mixerInfo);
                 if (m.isLineSupported(info)) {
@@ -281,7 +286,8 @@ public class Audio {
      * return an error
      */
     public static Input createInput(Digi par, String name) {
-        Info dev = inputDevices.get(name);
+        Map<String, Info> devices = getInputDevices();
+        Info dev = devices.get(name);
         if (dev != null) {
             return new Input(par, dev);
         } else {
@@ -294,7 +300,8 @@ public class Audio {
      * Create an audio output device by name .  If name does not exist, return an error
      */
     public static Output createOutput(Digi par, String name) {
-        Info dev = outputDevices.get(name);
+        Map<String, Info> devices = getOutputDevices();
+        Info dev = devices.get(name);
         if (dev != null) {
             return new Output(par, dev);
         } else {
