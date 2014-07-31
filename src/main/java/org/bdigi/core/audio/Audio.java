@@ -65,7 +65,7 @@ public class Audio {
             }
         }
 
-        public boolean open() {
+        public boolean start() {
             if (line == null) {
                 par.error("input open: line not initialized");
                 return false;
@@ -83,13 +83,13 @@ public class Audio {
             return true;
         }
             
-        public boolean close() {
+        public boolean stop() {
             line.stop();
             line.close();
             //par.trace("line close")
             return true;
         }
-            
+
         public double getSampleRate() {
             return 44100.0;
         }
@@ -162,7 +162,7 @@ public class Audio {
             }
         }
 
-        public boolean open() {
+        public boolean start() {
             if (line == null) {
                 par.error("output open: line not initialized");
                 return false;
@@ -176,11 +176,12 @@ public class Audio {
             return true;
         }
             
-        public boolean close() {
+        public boolean stop() {
             line.close();
             return true;
         }
-            
+
+
         public double getSampleRate() {
             return 44100.0;
         }

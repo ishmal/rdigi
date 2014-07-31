@@ -27,9 +27,12 @@
  
  
  public interface AudioOutput {
- 
- 
- 
- 
+
+     public boolean write(double[] buf);
+
+     public boolean start();
+
+     public boolean stop();
+
  }
  

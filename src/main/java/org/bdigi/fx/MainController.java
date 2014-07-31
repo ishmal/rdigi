@@ -159,9 +159,9 @@ public class MainController extends Digi {
             logDialog.puttext(msg + "\n");
     }
 
-    public void updateSpectrum(int ps[]) {
+    public void showSpectrum(double ps[]) {
         if (tuningPanel != null)
-            tuningPanel.update(ps);
+            tuningPanel.updateSpectrum(ps);
     }
 
     public void updateScope(double buf[][]) {
