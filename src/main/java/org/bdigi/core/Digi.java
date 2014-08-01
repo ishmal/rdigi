@@ -56,12 +56,13 @@ public class Digi {
         decimator = Resampler.create(decimation);
         interpolator = Resampler.create(decimation);
 
-        config = new Config(this);
         rxtx = false;
         fftin = new double[Constants.FFT_SIZE];
         fftout = new double[Constants.BINS];
         fftptr = 0;
         fftctr = 0;
+        config = new Config(this);
+        config.loadFile();
     }
 
     public void error(String msg) {
@@ -165,6 +166,14 @@ public class Digi {
      */
     public void puttext(String s) {
 
+    }
+
+    /**
+     * Override this to get text to send
+     * @return
+     */
+    public String gettext() {
+        return "";
     }
 
     public void setAudioInput(String name) {

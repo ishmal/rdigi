@@ -286,7 +286,7 @@ public class TuningPanel extends AnchorPane {
         private double buf[][];
         private double lastx;
         private double lasty;
-        private double vscale;
+        private double scale;
         private int timeScale;
         GraphicsContext ctx;
 
@@ -295,7 +295,7 @@ public class TuningPanel extends AnchorPane {
             buf = new double[0][2];
             lastx = 0.0;
             lasty = 0.0;
-            vscale = 10.0;
+            scale = 0.5 * width;
             timeScale = 2;
 
             ctx = canvas.getGraphicsContext2D();
@@ -326,8 +326,8 @@ public class TuningPanel extends AnchorPane {
                 double v[] = buf[i];
                 double vx = v[0];
                 double vy = v[1];
-                x = x0 + vx * vscale;
-                y = y0 + vy * vscale;
+                x = x0 + vx * scale;
+                y = y0 + vy * scale;
                 ctx.strokeLine(lastx, lasty, x, y);
                 lastx = x;
                 lasty = y;

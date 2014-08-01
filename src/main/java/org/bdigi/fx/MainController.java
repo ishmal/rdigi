@@ -146,26 +146,31 @@ public class MainController extends Digi {
      * Override these in your client code, especially for a GUI
      */
 
+    @Override
     public String gettext() {
         return (inputText != null) ? inputText.gettext() : "";
     }
 
+    @Override
     public void puttext(String msg) {
         if (consoleText != null)
             consoleText.puttext(msg);
     }
 
+    @Override
     public void status(String msg) {
         if (logDialog != null)
             logDialog.puttext(msg + "\n");
     }
 
+    @Override
     public void showSpectrum(double ps[]) {
         if (tuningPanel != null)
             tuningPanel.updateSpectrum(ps);
     }
 
-    public void updateScope(double buf[][]) {
+    @Override
+    public void showScope(double buf[][]) {
         if (tuningPanel != null)
             tuningPanel.updateScope(buf);
     }

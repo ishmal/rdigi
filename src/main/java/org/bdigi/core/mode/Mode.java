@@ -58,6 +58,8 @@ public class Mode {
 
     public void setFrequency(double v) {
         frequency = v;
+        nco.setFrequency(v);
+        adjustAfc();
     }
 
     public double getFrequency() {
