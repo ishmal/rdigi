@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.zxing.common.reedsolomon;
+package org.bdigi.core.fec.rs;
 
 /**
  * <p>This class contains utility methods for performing mathematical operations over

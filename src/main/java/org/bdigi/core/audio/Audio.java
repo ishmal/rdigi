@@ -29,6 +29,7 @@ package org.bdigi.core.audio;
 import org.bdigi.core.Digi;
 
 import javax.sound.sampled.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -121,9 +122,7 @@ public class Audio {
                     double dval = bytesToDouble[buf[i] & 0xff][buf[i+1] & 0xff];
                     vbuf[vptr++] = dval;
                 }
-                double packet[] = new double[vptr];
-                System.arraycopy(vbuf, 0, packet, 0, vptr);
-                return packet;
+                return Arrays.copyOf(vbuf, vptr);
             }
         }
         

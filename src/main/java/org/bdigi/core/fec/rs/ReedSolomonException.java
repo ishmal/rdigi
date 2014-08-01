@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.zxing.common.reedsolomon;
+package org.bdigi.core.fec.rs;
 
 /**
  * <p>Thrown when an exception occurs during Reed-Solomon decoding, such as when

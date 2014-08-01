@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.zxing.common.reedsolomon;
+package org.bdigi.core.fec.rs;
 
 /**
  * <p>Implements Reed-Solomon decoding, as the name implies.</p>

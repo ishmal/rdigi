@@ -59,11 +59,12 @@ public class MainGui extends Application {
 		MainController controller = new MainController(stage);
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("/main.fxml"));
 		loader.setController(controller);
-		Parent page = (Parent) loader.load();
-		Scene scene = new Scene(page);
+		Parent root = (Parent) loader.load();
+		Scene scene = new Scene(root);
 		stage.setTitle("bdigi");
-		stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
+ 		stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
 		stage.setScene(scene);
+        stage.sizeToScene();
 		stage.show();
     }
 

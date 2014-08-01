@@ -81,6 +81,8 @@ public class Digi {
     }
 
     public void setMode(Mode m) {
+        double f = getFrequency();
+        m.setFrequency(f);
         mode = m;
     }
 
@@ -212,14 +214,15 @@ public class Digi {
         for (int i = 0; i < len; i++) {
             double v = recvbuf[i];
             if (decimator.decimate(v)) {
-                mode.receiveData(decimator.getValue());
-            }
-            fftin[fftptr++] = v;
-            fftptr &= FFT_MASK;
-            if (++fftctr >= FFT_WINDOW) {
-                fftctr = 0;
-                fft.powerSpectrum(fftin, fftout);
-                showSpectrum(fftout);
+                double dv = decimator.getValue();
+                mode.receiveData(dv);
+                fftin[fftptr++] = dv;
+                fftptr &= FFT_MASK;
+                if (++fftctr >= FFT_WINDOW) {
+                    fftctr = 0;
+                    fft.powerSpectrum(fftin, fftout);
+                    showSpectrum(fftout);
+                }
             }
         }
         return true;

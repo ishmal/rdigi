@@ -26,6 +26,7 @@
 package org.bdigi.fx;
 
 
+import com.sun.tools.internal.jxc.ap.Const;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -44,9 +45,11 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import org.bdigi.core.Constants;
 import org.bdigi.core.Digi;
 
 import java.nio.IntBuffer;
+import java.util.Arrays;
 
 //########################################################################
 //#    Tuning Panel.    A single canvas with three widgets
@@ -103,6 +106,7 @@ public class TuningPanel extends AnchorPane {
 
         widthProperty().addListener(listener);
         heightProperty().addListener(listener);
+        start();
     }
 
 
@@ -130,6 +134,7 @@ public class TuningPanel extends AnchorPane {
             lastRow = nrPix - width;
             writer = img.getPixelWriter();
             format = PixelFormat.getIntArgbInstance();
+            psbuf = new double[Constants.BINS];
             genColors();
         }
 
@@ -165,7 +170,7 @@ public class TuningPanel extends AnchorPane {
             int pixptr = lastRow;
             for (int i = 0; i < width; i++) {
                 double v = psbuf[psIndices[i]];
-                int p = (int)(Math.log(v) * 10.0);
+                int p = (int)(Math.log(Math.abs(v) + 1.0) * 20.0);
                 pix[pixptr++] = colors[p & 0xff];
             }
             //trace("iw:" + iwidth + "  ih:" + iheight + "  pix:" + pix.size + " pslen:" + pslen)
@@ -174,7 +179,7 @@ public class TuningPanel extends AnchorPane {
         }
 
         public void update(double ps[]) {
-            psbuf = ps.clone();
+            psbuf = Arrays.copyOf(ps, ps.length);
         }
 
     }//Waterfall

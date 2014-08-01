@@ -177,6 +177,7 @@ public class Psk extends Mode {
             for (int j=0 ; j<slen ; j++) {
                 barr[j] = (s.charAt(j) == '1');
             }
+            encodeTable[i] = barr;
             int ival = Integer.parseInt(s, 2);
             decodeTable[ival] = i;
         }
@@ -328,7 +329,7 @@ public class Psk extends Mode {
             code >>= 1;   //remove trailing 0
             if (code != 0) {
                 //println("code:" + Varicode.toString(code))
-                int ascii = decodeTable[code];
+                int ascii = decodeTable[code & 0x3ff];
                 if (ascii != 0) {
                     int chr = ascii;
                     if (chr == 10 || chr == 13)
