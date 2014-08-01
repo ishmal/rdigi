@@ -83,7 +83,8 @@ public class MainController extends Digi {
 
     @FXML
     public void doAbout(Event evt) {
-        aboutDialog.show();
+        if (aboutDialog != null)
+            aboutDialog.show();
     }
 
     @FXML

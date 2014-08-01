@@ -102,6 +102,22 @@ public class Digi {
 
     public void setTx(boolean v) {
         rxtx = v;
+        if (rxtx) {
+            if (audioInput != null) {
+                audioInput.stop();
+            }
+            if (audioOutput != null) {
+                audioOutput.start();
+            }
+
+        } else {
+            if (audioOutput != null) {
+                audioOutput.stop();
+            }
+            if (audioInput != null) {
+                audioInput.start();
+            }
+        }
     }
 
     public void setAfc(boolean v) {
@@ -123,7 +139,7 @@ public class Digi {
     /**
      * Called by the receive thread to display
      * the current power spectrum.  Overload this
-     * in a GUI
+     * in a UI
      * @param ps double-valued power spectrum array
      */
     public void showSpectrum(double ps[]) {
@@ -139,16 +155,33 @@ public class Digi {
     public void showScope(double xs[][]) {
         //override this in a gui
     }
+
+    /**
+     * Called by the current mode to display text
+     * Overload this in the UI
+     * @param s the string to display
+     */
     public void puttext(String s) {
 
     }
 
     public void setAudioInput(String name) {
+        setTx(false);
+        if (audioInput != null) {
+            audioInput.stop();
+        }
         audioInput = Audio.createInput(this, name);
+        audioInput.start();
+        start();
     }
 
     public void setAudioOutput(String name) {
+        setTx(false);
+        if (audioOutput != null) {
+            audioOutput.stop();
+        }
         audioOutput = Audio.createOutput(this, name);
+        start();
     }
 
     public void start() {
@@ -157,10 +190,17 @@ public class Digi {
         }
         ioThread = new IoThread();
         ioThread.start();
+        trace(("Start"));
     }
 
     public void stop() {
         ioThread.abort();
+        if (audioInput != null) {
+            audioInput.stop();
+        }
+        if (audioOutput != null) {
+            audioOutput.stop();
+        }
     }
 
     private boolean doReceiveTask() {
@@ -175,7 +215,7 @@ public class Digi {
                 mode.receiveData(decimator.getValue());
             }
             fftin[fftptr++] = v;
-            fftptr = FFT_MASK;
+            fftptr &= FFT_MASK;
             if (++fftctr >= FFT_WINDOW) {
                 fftctr = 0;
                 fft.powerSpectrum(fftin, fftout);

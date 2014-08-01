@@ -54,21 +54,17 @@ import java.io.IOException;
 
 public class MainGui extends Application {
 
-    public void start(Stage stage) {
-        try {
-            MainController controller = new MainController(stage);
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/main.fxml"));
-            loader.setController(controller);
-            Parent page = (Parent) loader.load();
-            Scene scene = new Scene(page);
-            stage.setTitle("bdigi");
-            stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
-            stage.setScene(scene);
-            stage.show();
-        } catch (Exception e) {
-            System.out.println("error:" + e);
-            e.printStackTrace();
-        }
+    public void start(Stage stage) throws Exception {
+		setUserAgentStylesheet(STYLESHEET_MODENA);
+		MainController controller = new MainController(stage);
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("/main.fxml"));
+		loader.setController(controller);
+		Parent page = (Parent) loader.load();
+		Scene scene = new Scene(page);
+		stage.setTitle("bdigi");
+		stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
+		stage.setScene(scene);
+		stage.show();
     }
 
     public static void main(String[] args) {
