@@ -6,18 +6,18 @@ package org.bdigi.core;
  */
 public class Nco {
 
-    double table[][];
-    long freq;
-    long phase;
-    long err;
-    double hzToInt;
-    long maxErr;
-    long minErr;
+    private double table[][];
+    private long freq;
+    private long phase;
+    private long err;
+    private double hzToInt;
+    private long maxErr;
+    private long minErr;
 
     public Nco(double frequency, double sampleRate) {
 
         generateTable();
-        hzToInt = 0xffffffff / sampleRate;
+        hzToInt = 4294967296.0 / sampleRate;
         maxErr = (long)(50*hzToInt);
         minErr = -maxErr;
         setFrequency(frequency);
@@ -57,7 +57,7 @@ public class Nco {
     public Complex mixNext(double v) {
         phase = (phase + (freq + err)) & 0xffffffff;
         double cs[] = table[((int)(phase>>16)) & 0xffff];
-        return new Complex(cs[0] *v, cs[1]*v);
+        return new Complex(cs[0]*v, cs[1]*v);
     }
 
 }

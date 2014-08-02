@@ -163,8 +163,6 @@ public class Resampler {
 	private final static double d76 = c0706 + c0712 + c0718;
 	private final static double d77 = c0713 + c0719;
 
-	private final static double idx = 0;
-
 	private final static double r0 = 0.0;
 	private final static double r1 = 0.0;
 	private final static double r2 = 0.0;
@@ -413,25 +411,35 @@ public class Resampler {
 		double r0, r1, r2, r3, r4, r5, r6, r7, r8;
 
 
-		public boolean decimate(double v) {
-			buf[idx++] = v;
-			if (idx >= decimation) {
-				idx = 0;
-				r0 = r7;
-				r1 = r8;
-				r2 = buf[0];
-				r3 = buf[1];
-				r4 = buf[2];
-				r5 = buf[3];
-				r6 = buf[4];
-				r7 = buf[5];
-				r8 = buf[6];
-				value = r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77;
+        public boolean decimate2(double v) {
+            r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=r7; r7=r8; r8=v;
+            if (idx++ >= decimation) {
+                idx = 0;
+                value = r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77;
                 return true;
             } else {
                 return false;
             }
-		}
+        }
+        public boolean decimate(double v) {
+            buf[idx++] = v;
+            if (idx >= decimation) {
+                idx = 0;
+                r0 = r7;
+                r1 = r8;
+                r2 = buf[0];
+                r3 = buf[1];
+                r4 = buf[2];
+                r5 = buf[3];
+                r6 = buf[4];
+                r7 = buf[5];
+                r8 = buf[6];
+                value = r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77;
+                return true;
+            } else {
+                return false;
+            }
+        }
 
 		public void interpolate(double v, double buf[]) {
 			r0 = r1;
@@ -476,7 +484,6 @@ public class Resampler {
 
         D resr;
         D resi;
-        double tempr;
         Complex value;
 
         public X(int decimation) {
@@ -485,11 +492,20 @@ public class Resampler {
         }
 
         public boolean decimate(Complex v) {
-            if (resr.decimate(v.getR())) {
-                tempr = resr.getValue();
-            }
+            resr.decimate(v.getR());
             if (resi.decimate(v.getI())) {
-                value = new Complex(tempr, resi.getValue());
+                value = new Complex(resr.getValue(), resi.getValue());
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        public boolean decimate(double r, double i) {
+            resr.decimate(r);
+            if (resi.decimate(i)) {
+                value = new Complex(resr.getValue(), resi.getValue());
                 return true;
             } else {
                 return false;

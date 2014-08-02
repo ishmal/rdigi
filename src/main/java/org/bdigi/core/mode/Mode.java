@@ -105,8 +105,8 @@ public class Mode {
     }
 
     public void receiveData(double v) {
-        Complex cx = nco.mixNext(v);
-        if (decimator.decimate(cx)) {
+        double cs[] = nco.next();
+        if (decimator.decimate(v*cs[0], v*cs[1])) {
             receive(decimator.getValue());
         }
     }

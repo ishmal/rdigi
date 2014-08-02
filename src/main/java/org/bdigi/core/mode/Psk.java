@@ -13,7 +13,7 @@ import org.bdigi.core.filter.Filter;
 public class Psk extends Mode {
 
     Filter ilp,qlp;
-    int symbollen, halfSym;
+    int symbollen, halfsym;
     boolean encodeTable[][];
     int decodeTable[];
     Convolutional.Decoder decoder;
@@ -198,37 +198,40 @@ public class Psk extends Mode {
         }
     }
 
-
+    @Override
     public double getBandwidth() {
         return getRate();
     }
 
 
-
+    @Override
     public void setRate(double rate) {
         super.setRate(rate);
         ilp = Biquad.lowpass(rate * 0.5, getSampleRate());
         qlp = Biquad.lowpass(rate * 0.5, getSampleRate());
+        //ilp = FIR.lowpass(13, rate * 0.5, getSampleRate(), Window.hann);
+        //qlp = FIR.lowpass(13, rate * 0.5, getSampleRate(), Window.hann);
         //bpf = FIR.bandpass(13, -0.7*this.getRate(), 0.7*this.getRate(), this.getSampleRate());
         symbollen = (int)Math.round(getSamplesPerSymbol());
-        halfSym = symbollen >> 1;
+        halfsym = symbollen >> 1;
     }
 
 
     int lastSign = -1;
     int samples = 0;
 
+    @Override
     public void receive(Complex z) {
         double i = ilp.update(z.getR());
         double q = qlp.update(z.getI());
         scopeOut(i, q);
-        int sign = (i > 0) ? 1 : -1; //Math.sign() not on Chrome
+        int sign = (i > 0.0) ? 1 : -1;
         if (sign != lastSign) {
             samples=0;
         } else {
             samples++;
         }
-        if ((samples%symbollen) == halfSym) {
+        if ((samples%symbollen) == halfsym) {
             processSymbol(i, q);
             //processBit(sign>0);
         }
@@ -240,12 +243,12 @@ public class Psk extends Mode {
     int sctr = 0;
     int ssctr = 0;
     private void scopeOut(double i, double q) {
-        if ((++ssctr & 1)==0) return; //skip items (odd?)
-        scopedata[sctr++] = new double[]{Math.log(i + 1) * 30.0, Math.log(q + 1) * 30.0};
+        if ((++ssctr % 0xf )==0) return; //skip items (odd?)
+        scopedata[sctr++] = new double[]{Math.log(i + 1) * 2.0, Math.log(q + 1) * 2.0};
         if (sctr >= SSIZE) {
-        par.showScope(scopedata);
-        sctr = 0;
-        scopedata = new double[SSIZE][2];
+            par.showScope(scopedata);
+            sctr = 0;
+            scopedata = new double[SSIZE][2];
         }
     }
 
@@ -310,14 +313,12 @@ public class Psk extends Mode {
                 processBit(bits[idx]);*/
             lastv = vn; /**/
         } else { //bpsk
-                    /**/
             dv  = angleDiff(vn,  lastv);
             d00 = distance(dv, Math.PI);
             d11 = distance(dv,     0.0);
             //println("%6.3f %6.3f %6.3f  :  %3d %3d".format(lastv, vn, dv, d00, d11))
             boolean bit = d11 < d00;
             lastv = vn;
-                        /**/
             processBit(bit);
         }
     }
@@ -329,13 +330,12 @@ public class Psk extends Mode {
             code >>= 1;   //remove trailing 0
             if (code != 0) {
                 //println("code:" + Varicode.toString(code))
-                int ascii = decodeTable[code & 0x3ff];
-                if (ascii != 0) {
-                    int chr = ascii;
+                int chr = decodeTable[code & 0x3ff];
+                if (chr != 0) {
                     if (chr == 10 || chr == 13)
                         par.puttext("\n");
                     else
-                        par.puttext("" + chr);
+                        par.puttext("" + (char)chr);
                     code = 0;
                 }
             }

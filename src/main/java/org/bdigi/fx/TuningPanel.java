@@ -26,7 +26,6 @@
 package org.bdigi.fx;
 
 
-import com.sun.tools.internal.jxc.ap.Const;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -85,28 +84,30 @@ public class TuningPanel extends AnchorPane {
         AnchorPane.setBottomAnchor(canvas, 0.);
         getChildren().add(canvas);
         ctx = canvas.getGraphicsContext2D();
-
-        waterfall = new Waterfall(initialWidth, initialHeight - TUNER_HEIGHT);
-        tuner = new TunerArea(initialWidth, TUNER_HEIGHT);
-        scope = new ScopeArea(initialHeight - TUNER_HEIGHT, initialHeight - TUNER_HEIGHT);
+        doLayout();
         ChangeListener<Number> listener = new ChangeListener<Number>() {
 
             public void changed(ObservableValue<? extends Number> value,
                                 Number oldval, Number newval) {
-                int w = (getWidth() > 50) ? (int) getWidth() : 50;
-                int h = (getHeight() > 50) ? (int) getHeight() : 50;
-                trace("w: " + w + "  h:" + h);
-                canvas.setWidth(w);
-                canvas.setHeight(h);
-                waterfall = new Waterfall(w, h - TUNER_HEIGHT);
-                tuner = new TunerArea(w, TUNER_HEIGHT);
-                scope = new ScopeArea(h - TUNER_HEIGHT, h - TUNER_HEIGHT);
+                doLayout();
             }
         };
 
         widthProperty().addListener(listener);
         heightProperty().addListener(listener);
         start();
+    }
+    
+    private void doLayout() {
+        int w = (getWidth() > 50) ? (int) getWidth() : 50;
+        int h = (getHeight() > 50) ? (int) getHeight() : 50;
+        trace("w: " + w + "  h:" + h);
+        canvas.setWidth(w);
+        canvas.setHeight(h);
+        waterfall = new Waterfall(w, h - TUNER_HEIGHT);
+        tuner = new TunerArea(w, TUNER_HEIGHT);
+        int scopesize = h-TUNER_HEIGHT;
+        scope = new ScopeArea(w-scopesize,0, scopesize,scopesize);
     }
 
 
@@ -281,43 +282,45 @@ public class TuningPanel extends AnchorPane {
     }//Tuner
 
 
-    class ScopeArea extends Canvas {
+    class ScopeArea {
 
         private double buf[][];
         private double lastx;
         private double lasty;
         private double scale;
         private int timeScale;
-        GraphicsContext ctx;
+        private int left;
+        private int top;
+        private int width;
+        private int height;
 
-        public ScopeArea(int width, int height) {
-            super(width, height);
+        public ScopeArea(int left, int top, int width, int height) {
+            this.left = left;
+            this.top = top;
+            this.width = width;
+            this.height = height;
             buf = new double[0][2];
             lastx = 0.0;
             lasty = 0.0;
             scale = 0.5 * width;
             timeScale = 2;
-
-            ctx = canvas.getGraphicsContext2D();
         }
 
         //only call from javafx thread
         public void redraw() {
-            int w = (int) getWidth();
-            double w2 = w * 0.5;
-            int h = (int) getHeight();
-            double h2 = h * 0.5;
-            double x0 = w2;
-            double y0 = h2;
-            double x = 0.0;
-            double y = 0.0;
+            double w2 = width * 0.5;
+            double h2 = height * 0.5;
+            double x0 = left + w2;
+            double y0 = top + h2;
+            double x = x0;
+            double y = y0;
 
             //crosshairs
             ctx.setFill(Color.BLACK);
-            ctx.fillRect(0, 0, w, h);
+            ctx.fillRect(left, top, width, height);
             ctx.setStroke(Color.WHITE);
-            ctx.strokeLine(0, h2, w, h2);
-            ctx.strokeLine(w2, 0, w2, h);
+            ctx.strokeLine(left, y0, left+width, y0);
+            ctx.strokeLine(x0, top, x0, top+height);
 
             //the trace line
             ctx.setStroke(Color.YELLOW);

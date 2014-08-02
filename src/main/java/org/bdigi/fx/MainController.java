@@ -66,7 +66,7 @@ public class MainController extends Digi {
 
     @FXML
     public void doClose(Event evt) {
-        /* stopProcessing(); */
+        stop();
         Platform.exit();
     }
 

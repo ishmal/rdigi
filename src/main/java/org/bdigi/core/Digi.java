@@ -219,6 +219,8 @@ public class Digi {
             return false;
         }
         double recvbuf[] = audioInput.read();
+        if (recvbuf == null)
+            return true;
         int len = recvbuf.length;
         for (int i = 0; i < len; i++) {
             double v = recvbuf[i];
