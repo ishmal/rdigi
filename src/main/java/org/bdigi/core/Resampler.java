@@ -187,7 +187,6 @@ public class Resampler {
 
 	public static abstract class D {
 		int decimation;
-		double buf[];
 		int idx;
         double value;
         
@@ -201,7 +200,6 @@ public class Resampler {
 
 		public D(int decimation) {
 			this.decimation = decimation;
-			this.buf = new double[decimation];
 			idx = 0;
 		}
 	}
@@ -230,13 +228,9 @@ public class Resampler {
 		double r0, r1, r2, r3;
 
 		public boolean decimate(double v) {
-			buf[idx++] = v;
-			if (idx >= decimation) {
+			r0=r1; r1=r2; r2=r3; r3=v;
+			if (++idx >= decimation) {
 				idx = 0;
-				r0 = r2;
-				r1 = r3;
-				r2 = buf[0];
-				r3 = buf[1];
 				value =r1 * d21 + r2 * d22;
                 return true;
 			} else {
@@ -245,9 +239,7 @@ public class Resampler {
 		}
 
 		public void interpolate(double v, double buf[]) {
-			r0 = r1;
-			r1 = r2;
-			r2 = v;
+			r0 = r1; r1 = r2; r2 = v;
 			buf[0] = /*r0 * c0200 + */r1 * c0202 + r2 * c0204;
 			buf[1] = r0 * c0201 + r1 * c0203/* + r2 * c0205*/;
 		}
@@ -262,14 +254,9 @@ public class Resampler {
 
 
 		public boolean decimate(double v) {
-			buf[idx++] = v;
-			if (idx >= decimation) {
+			r0=r1; r1=r2; r2=r3; r3=r4; r4=v;
+			if (++idx >= decimation) {
 				idx = 0;
-				r0 = r3;
-				r1 = r4;
-				r2 = buf[0];
-				r3 = buf[1];
-				r4 = buf[2];
 				value = r1 * d31 + r2 * d32 + r3 * d33;
                 return true;
             } else {
@@ -297,15 +284,9 @@ public class Resampler {
 
 
 		public boolean decimate(double v) {
-			buf[idx++] = v;
-			if (idx >= decimation) {
+			r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=v;
+			if (++idx >= decimation) {
 				idx = 0;
-				r0 = r4;
-				r1 = r5;
-				r2 = buf[0];
-				r3 = buf[1];
-				r4 = buf[2];
-				r5 = buf[3];
 				value = r1 * d41 + r2 * d42 + r3 * d43 + r4 * d44;
                 return true;
             } else {
@@ -334,16 +315,9 @@ public class Resampler {
 
 
 		public boolean decimate(double v) {
-			buf[idx++] = v;
-			if (idx >= decimation) {
+			r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=v;
+			if (++idx >= decimation) {
 				idx = 0;
-				r0 = r5;
-				r1 = r6;
-				r2 = buf[0];
-				r3 = buf[1];
-				r4 = buf[2];
-				r5 = buf[3];
-				r6 = buf[4];
 				value = r1 * d51 + r2 * d52 + r3 * d53 + r4 * d54 + r5 * d55;
                 return true;
             } else {
@@ -372,17 +346,9 @@ public class Resampler {
 
 
 		public boolean decimate(double v) {
-			buf[idx++] = v;
-			if (idx >= decimation) {
-				idx = 0;
-				r0 = r6;
-				r1 = r7;
-				r2 = buf[0];
-				r3 = buf[1];
-				r4 = buf[2];
-				r5 = buf[3];
-				r6 = buf[4];
-				r7 = buf[5];
+            r0 = r1; r1 = r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=r7; r7=v;
+            if (++idx >= decimation) {
+                idx = 0;
 				value = r1 * d61 + r2 * d62 + r3 * d63 + r4 * d64 + r5 * d65 + r6 * d66;
                 return true;
             } else {
@@ -411,36 +377,17 @@ public class Resampler {
 		double r0, r1, r2, r3, r4, r5, r6, r7, r8;
 
 
-        public boolean decimate2(double v) {
-            r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=r7; r7=r8; r8=v;
-            if (idx++ >= decimation) {
-                idx = 0;
-                value = r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77;
-                return true;
-            } else {
-                return false;
-            }
-        }
         public boolean decimate(double v) {
-            buf[idx++] = v;
-            if (idx >= decimation) {
+            r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=r7; r7=r8; r8=v;
+            if (++idx >= 7) {
                 idx = 0;
-                r0 = r7;
-                r1 = r8;
-                r2 = buf[0];
-                r3 = buf[1];
-                r4 = buf[2];
-                r5 = buf[3];
-                r6 = buf[4];
-                r7 = buf[5];
-                r8 = buf[6];
                 value = r1 * d71 + r2 * d72 + r3 * d73 + r4 * d74 * r5 * d75 + r6 * d76 + r7 * d77;
                 return true;
             } else {
                 return false;
             }
         }
-
+ 
 		public void interpolate(double v, double buf[]) {
 			r0 = r1;
 			r1 = r2;
