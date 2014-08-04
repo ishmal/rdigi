@@ -64,7 +64,7 @@ public static class RS2 implements RS {
         r0=r1; r1=r2; r2=r3; r3=v;
         if (++idx >= 2) {
             idx = 0;
-            r = r2*0.90451;
+            this.r = r2*0.90451;
             return true;
         } else {
             return false;
@@ -76,8 +76,8 @@ public static class RS2 implements RS {
         i0=i1; i1=i2; i2=i3; i3=i;
         if (++idx >= 2) {
             idx = 0;
-            r = r2*0.90451;
-            i = i2*0.90451;
+            this.r = r2*0.90451;
+            this.i = i2*0.90451;
             return true;
         } else {
             return false;
@@ -118,7 +118,7 @@ public static class RS3 implements RS {
         r0=r1; r1=r2; r2=r3; r3=r4; r4=v;
         if (++idx >= 3) {
             idx = 0;
-            r = r1*0.21783 + r2*0.48959 + r3*0.21783;
+            this.r = r1*0.21783 + r2*0.48959 + r3*0.21783;
             return true;
         } else {
             return false;
@@ -130,8 +130,8 @@ public static class RS3 implements RS {
         i0=i1; i1=i2; i2=i3; i3=i4; i4=i;
         if (++idx >= 3) {
             idx = 0;
-            r = r1*0.21783 + r2*0.48959 + r3*0.21783;
-            i = i1*0.21783 + i2*0.48959 + i3*0.21783;
+            this.r = r1*0.21783 + r2*0.48959 + r3*0.21783;
+            this.i = i1*0.21783 + i2*0.48959 + i3*0.21783;
             return true;
         } else {
             return false;
@@ -175,7 +175,7 @@ public static class RS4 implements RS {
         r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=v;
         if (++idx >= 4) {
             idx = 0;
-            r = r1*0.00480 + r2*0.29652 + r3*0.37867 + r4*0.25042;
+            this.r = r1*0.00480 + r2*0.29652 + r3*0.37867 + r4*0.25042;
             return true;
         } else {
             return false;
@@ -187,8 +187,8 @@ public static class RS4 implements RS {
         i0=i1; i1=i2; i2=i3; i3=i4; i4=i5; i5=i;
         if (++idx >= 4) {
             idx = 0;
-            r = r1*0.00480 + r2*0.29652 + r3*0.37867 + r4*0.25042;
-            i = i1*0.00480 + i2*0.29652 + i3*0.37867 + i4*0.25042;
+            this.r = r1*0.00480 + r2*0.29652 + r3*0.37867 + r4*0.25042;
+            this.i = i1*0.00480 + i2*0.29652 + i3*0.37867 + i4*0.25042;
             return true;
         } else {
             return false;
@@ -235,7 +235,7 @@ public static class RS5 implements RS {
         r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=v;
         if (++idx >= 5) {
             idx = 0;
-            r = r1*0.07325 + r2*0.23311 + r3*0.31859 + r4*0.23311 + 
+            this.r = r1*0.07325 + r2*0.23311 + r3*0.31859 + r4*0.23311 + 
                 r5*0.07325;
             return true;
         } else {
@@ -248,9 +248,9 @@ public static class RS5 implements RS {
         i0=i1; i1=i2; i2=i3; i3=i4; i4=i5; i5=i6; i6=i;
         if (++idx >= 5) {
             idx = 0;
-            r = r1*0.07325 + r2*0.23311 + r3*0.31859 + r4*0.23311 + 
+            this.r = r1*0.07325 + r2*0.23311 + r3*0.31859 + r4*0.23311 + 
                 r5*0.07325;
-            i = i1*0.07325 + i2*0.23311 + i3*0.31859 + i4*0.23311 + 
+            this.i = i1*0.07325 + i2*0.23311 + i3*0.31859 + i4*0.23311 + 
                 i5*0.07325;
             return true;
         } else {
@@ -303,7 +303,7 @@ public static class RS6 implements RS {
         r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=r7; r7=v;
         if (++idx >= 6) {
             idx = 0;
-            r = r1*0.00110 + r2*0.12515 + r3*0.22836 + r4*0.27379 + 
+            this.r = r1*0.00110 + r2*0.12515 + r3*0.22836 + r4*0.27379 + 
                 r5*0.19920 + r6*0.10546;
             return true;
         } else {
@@ -316,9 +316,9 @@ public static class RS6 implements RS {
         i0=i1; i1=i2; i2=i3; i3=i4; i4=i5; i5=i6; i6=i7; i7=i;
         if (++idx >= 6) {
             idx = 0;
-            r = r1*0.00110 + r2*0.12515 + r3*0.22836 + r4*0.27379 + 
+            this.r = r1*0.00110 + r2*0.12515 + r3*0.22836 + r4*0.27379 + 
                 r5*0.19920 + r6*0.10546;
-            i = i1*0.00110 + i2*0.12515 + i3*0.22836 + i4*0.27379 + 
+            this.i = i1*0.00110 + i2*0.12515 + i3*0.22836 + i4*0.27379 + 
                 i5*0.19920 + i6*0.10546;
             return true;
         } else {
@@ -374,7 +374,7 @@ public static class RS7 implements RS {
         r0=r1; r1=r2; r2=r3; r3=r4; r4=r5; r5=r6; r6=r7; r7=r8; r8=v;
         if (++idx >= 7) {
             idx = 0;
-            r = r1*0.03499 + r2*0.11298 + r3*0.19817 + r4*0.24057 + 
+            this.r = r1*0.03499 + r2*0.11298 + r3*0.19817 + r4*0.24057 + 
                 r5*0.19817 + r6*0.11298 + r7*0.03499;
             return true;
         } else {
@@ -387,9 +387,9 @@ public static class RS7 implements RS {
         i0=i1; i1=i2; i2=i3; i3=i4; i4=i5; i5=i6; i6=i7; i7=i8; i8=i;
         if (++idx >= 7) {
             idx = 0;
-            r = r1*0.03499 + r2*0.11298 + r3*0.19817 + r4*0.24057 + 
+            this.r = r1*0.03499 + r2*0.11298 + r3*0.19817 + r4*0.24057 + 
                 r5*0.19817 + r6*0.11298 + r7*0.03499;
-            i = i1*0.03499 + i2*0.11298 + i3*0.19817 + i4*0.24057 + 
+            this.i = i1*0.03499 + i2*0.11298 + i3*0.19817 + i4*0.24057 + 
                 i5*0.19817 + i6*0.11298 + i7*0.03499;
             return true;
         } else {
@@ -449,7 +449,7 @@ public static class RS11 implements RS {
                 r10=r11; r11=r12; r12=v;
         if (++idx >= 11) {
             idx = 0;
-            r = r1*0.01322 + r2*0.03922 + r3*0.07264 + r4*0.11402 + 
+            this.r = r1*0.01322 + r2*0.03922 + r3*0.07264 + r4*0.11402 + 
                 r5*0.14759 + r6*0.16043 + r7*0.14759 + r8*0.11402 + r9*0.07264 + 
                 r10*0.03922 + r11*0.01322;
             return true;
@@ -465,10 +465,10 @@ public static class RS11 implements RS {
                 i10=i11; i11=i12; i12=i;
         if (++idx >= 11) {
             idx = 0;
-            r = r1*0.01322 + r2*0.03922 + r3*0.07264 + r4*0.11402 + 
+            this.r = r1*0.01322 + r2*0.03922 + r3*0.07264 + r4*0.11402 + 
                 r5*0.14759 + r6*0.16043 + r7*0.14759 + r8*0.11402 + r9*0.07264 + 
                 r10*0.03922 + r11*0.01322;
-            i = i1*0.01322 + i2*0.03922 + i3*0.07264 + i4*0.11402 + 
+            this.i = i1*0.01322 + i2*0.03922 + i3*0.07264 + i4*0.11402 + 
                 i5*0.14759 + i6*0.16043 + i7*0.14759 + i8*0.11402 + i9*0.07264 + 
                 i10*0.03922 + i11*0.01322;
             return true;
