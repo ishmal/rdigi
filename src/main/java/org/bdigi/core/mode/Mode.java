@@ -11,8 +11,8 @@ public class Mode {
     Property props;
     int decimation;
     double sampleRate;
-    Resampler.X decimator;
-    Resampler.X interpolator;
+    Resampler.RS decimator;
+    Resampler.RS interpolator;
     Nco nco;
 
     public Mode(Digi par, Property props, double sampleRateHint) {
@@ -25,8 +25,8 @@ public class Mode {
         decimation = (int)(par.getSampleRate() / sampleRateHint);
         sampleRate = par.getSampleRate() / decimation;
 
-        decimator = new Resampler.X(decimation);
-        interpolator = new Resampler.X(decimation);
+        decimator = Resampler.create(decimation);
+        interpolator = Resampler.create(decimation);
 
         nco = new Nco(frequency, par.getSampleRate());
 
@@ -107,7 +107,7 @@ public class Mode {
     public void receiveData(double v) {
         double cs[] = nco.next();
         if (decimator.decimate(v*cs[0], v*cs[1])) {
-            receive(decimator.getValue());
+            receive(new Complex(decimator.getR(), decimator.getI()));
         }
     }
 

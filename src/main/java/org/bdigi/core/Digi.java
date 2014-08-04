@@ -24,8 +24,8 @@ public class Digi {
     private Mode mode;
 
     private int decimation;
-    private Resampler.D decimator;
-    private Resampler.D interpolator;
+    private Resampler.RS decimator;
+    private Resampler.RS interpolator;
 
     private Config config;
     private IoThread ioThread;
@@ -225,7 +225,7 @@ public class Digi {
         for (int i = 0; i < len; i++) {
             double v = recvbuf[i];
             if (decimator.decimate(v)) {
-                double dv = decimator.getValue();
+                double dv = decimator.getR();
                 mode.receiveData(dv);
                 fftin[fftptr++] = dv;
                 fftptr &= FFT_MASK;
