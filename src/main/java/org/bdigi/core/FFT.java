@@ -31,7 +31,7 @@ import java.util.ArrayList;
 /**
  * A fairly efficient split-radix FFT
  */
-class FFT {
+public class FFT {
 
     private int N;
     private int N2;
