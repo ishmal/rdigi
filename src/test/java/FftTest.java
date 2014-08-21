@@ -27,7 +27,7 @@ public class FftTest {
         int fft1Time = (int) (endTime - startTime);
         startTime = System.currentTimeMillis();
         for (int i=0 ; i<100000 ; i++) {
-            fft1.powerSpectrum(in, out);
+            fft2.powerSpectrum(in, out);
         }
         endTime = System.currentTimeMillis();
         int fft2Time = (int) (endTime - startTime);
