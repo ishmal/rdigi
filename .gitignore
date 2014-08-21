@@ -3,11 +3,8 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.next
 release.properties
-
 /.idea/workspace.xml
-
 *.iml
-
 /.idea/libraries/
-
 /bdigi.ini
+rdigi.iml
