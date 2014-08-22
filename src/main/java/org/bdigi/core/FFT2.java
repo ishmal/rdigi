@@ -82,6 +82,7 @@ public class FFT2 {
         }
     }
 
+
     //let's pre-generate anything we can
     private void generateStages() {
         ArrayList<Step[]> xs = new ArrayList<Step[]>();
@@ -92,7 +93,7 @@ public class FFT2 {
             double e = 2.0 * Math.PI / n2;
             for (int j = 1; j < n4; j++) {
                 double a = j * e;
-                stage.add(new Step(Math.cos(a), Math.sin(a), Math.cos(3.0 * a), Math.sin(3.0 * a)));
+                stage.add(new Step(Math.cos(a),Math.sin(a),Math.cos(3.0 * a),Math.sin(3.0 * a)));
             }
             xs.add(stage.toArray(new Step[0]));
         }
@@ -129,28 +130,19 @@ public class FFT2 {
                     int i2 = i1 + n4;
                     int i3 = i2 + n4;
 
-                    //sumdiff3[x[i0], x[i2], t0]
                     double xri2 = xr[i2];
                     double xii2 = xi[i2];
                     double tr0 = xr[i0] - xri2;
                     double ti0 = xi[i0] - xii2;
                     xr[i0] += xri2;
                     xi[i0] += xii2;
-                    //sumdiff3[x[i1], x[i3], t1]
                     double xri3 = xr[i3];
                     double xii3 = xi[i3];
-                    double tr1 = xr[i1] - xri3;
-                    double ti1 = xi[i1] - xii3;
                     xr[i1] += xri3;
                     xi[i1] += xii3;
-
-                    // t1 *= Complex[0, 1];  // +isign
-                    double tr = tr1;
-                    tr1 = -ti1;
-                    ti1 = tr;
-
-                    //sumdiff[t0, t1]
-                    tr = tr1 - tr0;
+                    double tr1 = xii3 - xi[i1];
+                    double ti1 = xr[i1] - xri3;
+                    double tr = tr1 - tr0;
                     double ti = ti1 - ti0;
                     tr0 += tr1;
                     ti0 += ti1;
@@ -183,28 +175,19 @@ public class FFT2 {
                         int i2 = i1 + n4;
                         int i3 = i2 + n4;
 
-                        //sumdiff3[x[i0], x[i2], t0]
                         double xri2 = xr[i2];
                         double xii2 = xi[i2];
                         double tr0 = xr[i0] - xri2;
                         double ti0 = xi[i0] - xii2;
                         xr[i0] += xri2;
                         xi[i0] += xii2;
-                        //sumdiff3[x[i1], x[i3], t1]
                         double xri3 = xr[i3];
                         double xii3 = xi[i3];
-                        double tr1 = xr[i1] - xri3;
-                        double ti1 = xi[i1] - xii3;
                         xr[i1] += xri3;
                         xi[i1] += xii3;
-
-                        // t1 *= Complex[0, 1];  // +isign
-                        double tr = tr1;
-                        tr1 = -ti1;
-                        ti1 = tr;
-
-                        //sumdiff[t0, t1]
-                        tr = tr1 - tr0;
+                        double tr1 = xii3 - xi[i1];
+                        double ti1 = xr[i1] - xri3;
+                        double tr = tr1 - tr0;
                         double ti = ti1 - ti0;
                         tr0 += tr1;
                         ti0 += ti1;

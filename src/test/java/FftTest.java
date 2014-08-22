@@ -11,6 +11,7 @@ public class FftTest {
 
     @Test
     public void performanceTest() {
+        int iterations = 500000;
         FFT fft1 = new FFT(2048);
         FFT2 fft2 = new FFT2(2048);
         double in[] = new double[2048];
@@ -20,13 +21,13 @@ public class FftTest {
         }
 
         long startTime = System.currentTimeMillis();
-        for (int i=0 ; i<100000 ; i++) {
+        for (int i=0 ; i<iterations ; i++) {
             fft1.powerSpectrum(in, out);
         }
         long endTime = System.currentTimeMillis();
         int fft1Time = (int) (endTime - startTime);
         startTime = System.currentTimeMillis();
-        for (int i=0 ; i<100000 ; i++) {
+        for (int i=0 ; i<iterations ; i++) {
             fft2.powerSpectrum(in, out);
         }
         endTime = System.currentTimeMillis();
