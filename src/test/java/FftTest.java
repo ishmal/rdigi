@@ -11,7 +11,7 @@ public class FftTest {
 
     @Test
     public void performanceTest() {
-        int iterations = 500000;
+        int iterations = 100000;
         FFT fft1 = new FFT(2048);
         FFT2 fft2 = new FFT2(2048);
         double in[] = new double[2048];

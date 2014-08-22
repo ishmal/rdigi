@@ -40,6 +40,7 @@ public class FFT {
     private Step stages[][];
     private double xr[];
     private double xi[];
+    private double zeroes[];
 
     public FFT(int N) {
         this.N = N;
@@ -47,6 +48,10 @@ public class FFT {
         power = (int) (Math.log(N) / Math.log(2));
         xr = new double[N];
         xi = new double[N];
+        zeroes = new double[N];
+        for (int i=0 ; i<N ; i++) {
+            zeroes[i] = 0.0;
+        }
         generateIndices();
         generateStages();
     }
@@ -104,10 +109,8 @@ public class FFT {
 
 
     public void apply(double[] input) {
-        for (int i = 0; i < N; i++) {
-            xr[i] = input[i]; // * W[idx];
-            xi[i] = 0;
-        }
+        System.arraycopy(input, 0, xr, 0, N);
+        System.arraycopy(zeroes, 0, xi, 0, N);
         compute();
     }
 

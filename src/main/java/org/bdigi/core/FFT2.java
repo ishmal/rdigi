@@ -40,6 +40,7 @@ public class FFT2 {
     private Step stages[][];
     private double xr[];
     private double xi[];
+    private double zeroes[];
 
     public FFT2(int N) {
         this.N = N;
@@ -47,6 +48,10 @@ public class FFT2 {
         power = (int) (Math.log(N) / Math.log(2));
         xr = new double[N];
         xi = new double[N];
+        zeroes = new double[N];
+        for (int i=0 ; i<N ; i++) {
+            zeroes[i] = 0.0;
+        }
         generateIndices();
         generateStages();
     }
@@ -105,10 +110,8 @@ public class FFT2 {
 
 
     public void apply(double[] input) {
-        for (int i = 0; i < N; i++) {
-            xr[i] = input[i]; // * W[idx];
-            xi[i] = 0;
-        }
+        System.arraycopy(input, 0, xr, 0, N);
+        System.arraycopy(zeroes, 0, xi, 0, N);
         compute();
     }
 
@@ -144,15 +147,11 @@ public class FFT2 {
                     double ti1 = xr[i1] - xri3;
                     double tr = tr1 - tr0;
                     double ti = ti1 - ti0;
-                    tr0 += tr1;
-                    ti0 += ti1;
-                    tr1 = tr;
-                    ti1 = ti;
 
-                    xr[i2] = tr0; // .mul[w1];
-                    xi[i2] = ti0; // .mul[w1];
-                    xr[i3] = tr1; // .mul[w3];
-                    xi[i3] = ti1; // .mul[w3];
+                    xr[i2] = tr0 + tr1; // .mul[w1];
+                    xi[i2] = ti0 + ti1; // .mul[w1];
+                    xr[i3] = tr; // .mul[w3];
+                    xi[i3] = ti; // .mul[w3];
                 }
 
             }
@@ -205,16 +204,17 @@ public class FFT2 {
             }
         }
 
-
         for (int ix = 0, id = 4; ix < N; id <<= 2) {
             for (int i0 = ix; i0 < N; i0 += id) {
                 int i1 = i0 + 1;
-                double tr = xr[i1] - xr[i0];
-                double ti = xi[i1] - xi[i0];
-                xr[i0] += xr[i1];
-                xi[i0] += xi[i1];
-                xr[i1] = tr;
-                xi[i1] = ti;
+                double xri0 = xr[i0];
+                double xri1 = xr[i1];
+                double xii0 = xi[i0];
+                double xii1 = xi[i1];
+                xr[i0] += xri1;
+                xi[i0] += xii1;
+                xr[i1] -= xri0;
+                xi[i1] -= xii0;
             }
             ix = id + id - 2; //2*[id-1];
         }
