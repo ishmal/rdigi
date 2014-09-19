@@ -31,7 +31,7 @@ import java.util.ArrayList;
 /**
  * A fairly efficient split-radix FFT
  */
-public class FFT2 {
+public final class FFT2 {
 
     private int N;
     private int N2;
@@ -115,7 +115,7 @@ public class FFT2 {
         compute();
     }
 
-    private void compute() {
+    private final void compute() {
 
         int stageidx = 0;
 

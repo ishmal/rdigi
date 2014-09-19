@@ -18,6 +18,7 @@ import org.bdigi.core.Property;
 import org.bdigi.core.mode.Mode;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * The controller for the "main" view (main.fxml)
@@ -107,18 +108,15 @@ public class MainController extends Digi {
         setAfc(((ToggleButton) evt.getSource()).isSelected());
     }
 
-
     /**
-     * Called by the FXMLLoader as a place to do post-loading setup
+     * Create the tabs with the mode-specific controls.  Broken out from initialize()
+     * so that this part of the gui can be changed dynamically.
      */
-    @FXML
-    public void initialize() {
-        tuningPanelBox.getChildren().add(tuningPanel);
-        tuningPanel.setManaged(true);
-        consoleTextBox.getChildren().add(consoleText);
-        inputTextBox.getChildren().add(inputText);
-
-        for (final Mode mode : getModes()) {
+    private void genModeGui() {
+        modePane.getTabs().clear();
+        for (Map.Entry<String, Mode> entry : getModes().entrySet()) {
+            String name = entry.getKey();
+            final Mode mode = entry.getValue();
             Property props = mode.getProperties();
             Tab tab = new Tab(props.getName());
             tab.setTooltip(new Tooltip(props.getTooltip()));
@@ -139,7 +137,34 @@ public class MainController extends Digi {
                     pane.getChildren().add(new PropertyWidget.Radio((Property.Radio) control));
                 }
             }
+
         }
+    }
+
+    /**
+     * Overriden from Digi in order to allow redraw of mode panels
+     * @param name short name of mode
+     * @param m mode to add
+     */
+    @Override
+    public void addMode(String name, Mode m) {
+        super.addMode(name, m);
+        genModeGui();
+    }
+
+
+
+    /**
+     * Called by the FXMLLoader as a place to do post-loading setup
+     */
+    @FXML
+    public void initialize() {
+        tuningPanelBox.getChildren().add(tuningPanel);
+        tuningPanel.setManaged(true);
+        consoleTextBox.getChildren().add(consoleText);
+        inputTextBox.getChildren().add(inputText);
+
+        genModeGui();
     }
 
     /**

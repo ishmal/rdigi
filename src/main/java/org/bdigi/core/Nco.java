@@ -60,4 +60,11 @@ public class Nco {
         return new Complex(cs[0]*v, cs[1]*v);
     }
 
+    public Complex mixNext(Complex v) {
+        phase = (phase + (freq + err)) & 0xffffffff;
+        double cs[] = table[((int)(phase>>16)) & 0xffff];
+        return v.mul(cs[0], cs[1]);
+    }
+
+
 }

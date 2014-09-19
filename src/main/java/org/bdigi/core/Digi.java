@@ -10,6 +10,10 @@ import org.bdigi.core.mode.Navtex;
 import org.bdigi.core.mode.Psk;
 import org.bdigi.core.mode.Rtty;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 public class Digi {
 
     private AudioInput audioInput;
@@ -17,15 +21,13 @@ public class Digi {
 
     private FFT fft;
 
-    private Rtty rttyMode;
-    private Psk pskMode;
-    private Navtex navtexMode;
-    private Mode modes[];
+    private HashMap<String, Mode> modes;
     private Mode mode;
 
     private int decimation;
     private Resampler.RS decimator;
     private Resampler.RS interpolator;
+    private double[] interpbuf;
 
     private Config config;
     private IoThread ioThread;
@@ -45,16 +47,17 @@ public class Digi {
         frequency = 1000.0;
         sampleRate = 6300.0;
 
-        pskMode = new Psk(this);
-        rttyMode = new Rtty(this);
-        navtexMode = new Navtex(this);
-        modes = new Mode[]{pskMode,rttyMode,navtexMode};
-        mode = pskMode;
+        modes = new HashMap<String,Mode>();
+        mode = new Psk(this);
+        modes.put("psk", mode);
+        modes.put("rtty", new Rtty(this));
+        modes.put("navtex", new Navtex(this));
 
         fft = new FFT(Constants.FFT_SIZE);
         decimation = 7;
         decimator = Resampler.create(decimation);
         interpolator = Resampler.create(decimation);
+        interpbuf = new double[decimation];
 
         rxtx = false;
         fftin = new double[Constants.FFT_SIZE];
@@ -77,7 +80,7 @@ public class Digi {
         return config;
     }
 
-    public Mode[] getModes() {
+    public HashMap<String, Mode> getModes() {
         return modes;
     }
 
@@ -85,6 +88,15 @@ public class Digi {
         double f = getFrequency();
         m.setFrequency(f);
         mode = m;
+    }
+
+    /**
+     * Override this in gui if redraw is required
+     * @param name
+     * @param m
+     */
+    public void addMode(String name, Mode m) {
+        modes.put(name, m);
     }
 
     public double getFrequency() {
@@ -243,6 +255,13 @@ public class Digi {
         if (audioOutput == null) {
             return false;
         }
+        double data[] = mode.getTransmitData();
+        int len = data.length;
+        for (int i=0 ; i<len ; i++) {
+            double v = data[i];
+            interpolator.interpolate(v, interpbuf);
+            audioOutput.write(interpbuf);
+        }
         return true;
     }
 
@@ -275,8 +294,6 @@ public class Digi {
         }
 
     }//IoThread
-
-
 
 
 

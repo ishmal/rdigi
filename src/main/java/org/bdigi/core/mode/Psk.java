@@ -184,13 +184,14 @@ public class Psk extends Mode {
     
     }
 
-
+    @Override
     public void booleanControl(String name, boolean value) {
         if ("qpsk".equals(name)) {
             setQpskMode(value);
         }
     }
 
+    @Override
     public void radioControl(String name, String value) {
         double d = Double.parseDouble(value);
         if ("rate".equals(name)) {
