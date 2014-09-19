@@ -14,9 +14,10 @@ public class Mode {
     Resampler.RS decimator;
     Resampler.RS interpolator;
     Nco nco;
-    Complex NULL_COMPLEX_ARRAY[];
-    Complex ZERO_COMPLEX_ARRAY[];
-    private final static int ZERO_SIZE = 1024;
+    Complex NULL_ARRAY[];
+    Complex ZEROES_ARRAY[];
+    Complex ONES_ARRAY[];
+    private final static int ARRAY_SIZE = 1024;
      private double interpr[];
     private double interpi[];
 
@@ -35,10 +36,12 @@ public class Mode {
 
         nco = new Nco(frequency, par.getSampleRate());
 
-        NULL_COMPLEX_ARRAY = new Complex[0];
-        ZERO_COMPLEX_ARRAY = new Complex[ZERO_SIZE];
-        for (int i=0 ; i<ZERO_SIZE ; i++) {
-            ZERO_COMPLEX_ARRAY[i] = new Complex(0);
+        NULL_ARRAY = new Complex[0];
+        ZEROES_ARRAY = new Complex[ARRAY_SIZE];
+        ONES_ARRAY = new Complex[ARRAY_SIZE];
+        for (int i=0 ; i<ARRAY_SIZE ; i++) {
+            ZEROES_ARRAY[i] = new Complex(0);
+            ONES_ARRAY[i] = new Complex(1);
         }
 
         interpr = new double[decimation];
@@ -150,8 +153,8 @@ public class Mode {
             double ci = cs[1];
             double ir = interpr[i];
             double ii = interpi[i];
-            double vr = cr * ii - ci * ir;
-            double vi = cr * ir - ci * ii;
+            double vr = cr * ir - ci * ii;
+            double vi = cr * ii + ci * ir;
             double outval = Math.hypot(vr, vi);
             outbuf[i] = outval;
         }
@@ -164,7 +167,7 @@ public class Mode {
      * @return An
      */
     public Complex[] transmit() {
-        return ZERO_COMPLEX_ARRAY;
+        return ONES_ARRAY;
     }
 
 }
