@@ -40,8 +40,8 @@ public class Mode {
         ZEROES_ARRAY = new Complex[ARRAY_SIZE];
         ONES_ARRAY = new Complex[ARRAY_SIZE];
         for (int i=0 ; i<ARRAY_SIZE ; i++) {
-            ZEROES_ARRAY[i] = new Complex(0);
-            ONES_ARRAY[i] = new Complex(1);
+            ZEROES_ARRAY[i] = new Complex(0,0);
+            ONES_ARRAY[i] = new Complex(0.5,0.5);
         }
 
         interpr = new double[decimation];
@@ -154,8 +154,8 @@ public class Mode {
             double ir = interpr[i];
             double ii = interpi[i];
             double vr = cr * ir - ci * ii;
-            double vi = cr * ii + ci * ir;
-            double outval = Math.hypot(vr, vi);
+            //double vi = cr * ii + ci * ir;
+            double outval = vr;
             outbuf[i] = outval;
         }
         return outbuf;

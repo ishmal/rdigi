@@ -7,6 +7,8 @@ package org.bdigi.core;
 public class Nco {
 
     private double table[][];
+    private double sampleRate;
+    private double frequency;
     private long freq;
     private long phase;
     private long err;
@@ -16,11 +18,13 @@ public class Nco {
 
     public Nco(double frequency, double sampleRate) {
 
+        this.sampleRate = sampleRate;
         generateTable();
         hzToInt = 4294967296.0 / sampleRate;
         maxErr = (long)(50*hzToInt);
         minErr = -maxErr;
         setFrequency(frequency);
+        setError(0);
     }
 
     private void generateTable() {
@@ -32,11 +36,12 @@ public class Nco {
         for (int idx = 0 ; idx < two16 ; idx++) {
             double angle = delta * idx;
             table[idx][0] = Math.cos(angle);
-            table[idx][1] = Math.sin(angle);
+            table[idx][1] = -Math.sin(angle);
         }
     }
 
     public void setFrequency(double frequency) {
+        this.frequency = frequency;
         freq = (long) (frequency * hzToInt);
     }
 
@@ -50,18 +55,18 @@ public class Nco {
     }
 
     public double[] next() {
-        phase = (phase + (freq + err)) & 0xffffffff;
+        phase = (phase + (freq + err)); // & 0xffffffff;
         return table[((int)(phase>>16)) & 0xffff];
     }
 
     public Complex mixNext(double v) {
-        phase = (phase + (freq + err)) & 0xffffffff;
+        phase = (phase + (freq + err)); // & 0xffffffff;
         double cs[] = table[((int)(phase>>16)) & 0xffff];
         return new Complex(cs[0]*v, cs[1]*v);
     }
 
     public Complex mixNext(Complex v) {
-        phase = (phase + (freq + err)) & 0xffffffff;
+        phase = (phase + (freq + err)); //  & 0xffffffff;
         double cs[] = table[((int)(phase>>16)) & 0xffff];
         return v.mul(cs[0], cs[1]);
     }

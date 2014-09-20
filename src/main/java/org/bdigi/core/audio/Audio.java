@@ -27,6 +27,7 @@ package org.bdigi.core.audio;
 
 
 import org.bdigi.core.Digi;
+import org.bdigi.core.Nco;
 
 import javax.sound.sampled.*;
 import java.util.Arrays;
@@ -184,7 +185,8 @@ public class Audio {
         public double getSampleRate() {
             return 44100.0;
         }
-            
+
+
         /*
          * What we expect is an array of doubles, -1.0 to 1.0
          */
