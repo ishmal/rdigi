@@ -115,7 +115,7 @@ public final class FFT2 {
         compute();
     }
 
-    private final void compute() {
+    private void compute() {
 
         int stageidx = 0;
 

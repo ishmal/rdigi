@@ -118,6 +118,7 @@ public class Digi {
     public void setTx(boolean v) {
         rxtx = v;
         if (rxtx) {
+            pauseDisplay();
             if (audioInput != null) {
                 audioInput.stop();
             }
@@ -126,6 +127,7 @@ public class Digi {
             }
 
         } else {
+            resumeDisplay();
             if (audioOutput != null) {
                 audioOutput.stop();
             }
@@ -148,6 +150,21 @@ public class Digi {
     }
 
     public void status(String s) {
+
+    }
+
+    /**
+     * Override this in the GUI to pause a display for any reason, such
+     * as transmitting
+     */
+    public void pauseDisplay() {
+
+    }
+
+    /**
+     * Override this in the GUI to resume a paused display
+     */
+    public void resumeDisplay() {
 
     }
 

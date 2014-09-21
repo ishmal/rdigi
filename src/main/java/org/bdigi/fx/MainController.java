@@ -189,6 +189,18 @@ public class MainController extends Digi {
     }
 
     @Override
+    public void pauseDisplay() {
+        if (tuningPanel != null)
+            tuningPanel.pause();
+    }
+
+    @Override
+    public void resumeDisplay() {
+        if (tuningPanel != null)
+            tuningPanel.resume();
+    }
+
+    @Override
     public void showSpectrum(double ps[]) {
         if (tuningPanel != null)
             tuningPanel.updateSpectrum(ps);

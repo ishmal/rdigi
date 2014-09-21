@@ -68,6 +68,7 @@ public class TuningPanel extends AnchorPane {
     private Waterfall waterfall;
     private TunerArea tuner;
     private ScopeArea scope;
+    private boolean paused;
 
     public TuningPanel(Digi par) {
         this.par = par;
@@ -86,7 +87,6 @@ public class TuningPanel extends AnchorPane {
         ctx = canvas.getGraphicsContext2D();
         doLayout();
         ChangeListener<Number> listener = new ChangeListener<Number>() {
-
             public void changed(ObservableValue<? extends Number> value,
                                 Number oldval, Number newval) {
                 doLayout();
@@ -95,6 +95,7 @@ public class TuningPanel extends AnchorPane {
 
         widthProperty().addListener(listener);
         heightProperty().addListener(listener);
+        paused = false;
         start();
     }
     
@@ -358,10 +359,20 @@ public class TuningPanel extends AnchorPane {
 
     class Redrawer implements EventHandler<ActionEvent> {
         public void handle(javafx.event.ActionEvent event) {
-            waterfall.redraw();
-            tuner.redraw();
-            scope.redraw();
+            if (!paused) {
+                waterfall.redraw();
+                tuner.redraw();
+                scope.redraw();
+            }
         }
+    }
+
+    public void pause() {
+        paused = true;
+    }
+
+    public void resume() {
+        paused = false;
     }
 
     private void start() {
