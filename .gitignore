@@ -8,3 +8,4 @@ release.properties
 /.idea/libraries/
 /bdigi.ini
 rdigi.iml
+/out/
